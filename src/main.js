@@ -2,6 +2,57 @@ import "./styles/style.css";
 import { gsap } from "gsap";
 import { TypeShuffle } from "./modules/typeShuffle";
 import Portal from "./modules/portalEffect";
+import barba from "@barba/core";
+
+// Trigger effect on button click
+document.addEventListener("DOMContentLoaded", function () {
+    // Init the portals
+    const $portalsContainer = document.getElementById("portalsContainer");
+    if ($portalsContainer) initPortals($portalsContainer);
+
+    // Init Barba
+    const body = document.querySelector("body");
+    if (body.getAttribute("data-barba") === "wrapper") {
+        initBarba();
+    }
+});
+
+function initBarba() {
+    console.log("init barba");
+
+    barba.init({
+        transitions: [
+            {
+                name: "barba",
+                leave(data) {
+                    return gsap.to(data.current.container, {
+                        xPercent: 100,
+                        duration: 0.4,
+                        ease: "power4.in",
+                    });
+                },
+                enter(data) {
+                    window.scrollTo(0, 0);
+                    gsap.set(data.next.container, {
+                        position: "absolute",
+                        top: "0px",
+                        width: "100%",
+                    });
+                    return gsap.from(data.next.container, {
+                        xPercent: -100,
+                        duration: 0.8,
+                        ease: "power4.out",
+                        onComplete: () => {
+                            gsap.set(data.next.container, {
+                                clearProps: "all",
+                            });
+                        }
+                    });
+                },
+            },
+        ],
+    });
+}
 
 // Function to apply the effect to a specific element by ID
 window.applyTextShuffle = function (elementId) {
@@ -14,16 +65,10 @@ window.applyTextShuffle = function (elementId) {
     }
 };
 
-// Trigger effect on button click
-document.addEventListener("DOMContentLoaded", function () {
-    initPortals();
-});
-
-function initPortals() {
-    console.log("initPortals");
+function initPortals($container) {
+    console.log("initPortals Test");
 
     // Create the portals
-    const $container = document.getElementById("portalsContainer");
     const portals = new Portal($container);
 
     // Button to focus on Square Portals
@@ -115,16 +160,33 @@ function initPortals() {
                 console.warn("Shape not found.");
         }
 
-        // Switch content
-        const $activePortal = document.querySelector(".portal--active");
-        $activePortal.classList.remove("portal--active");
-        const $newActivePortal = document.getElementById(contentID);
-        $newActivePortal.classList.add("portal--active");
-
-        // Focus on the selected shape
-        portals.focus(shape);
-        // Apply text shuffle effect
+        // Start switch effect first
         applyTextShuffle(contentID);
+
+        // Animate the rest
+        setTimeout(() => {
+            // Switch content
+            const $activePortal = document.querySelector(".portal--active");
+            $activePortal.classList.remove("portal--active");
+            const $newActivePortal = document.getElementById(contentID);
+            $newActivePortal.classList.add("portal--active");
+
+            // Focus on the selected shape
+            portals.focus(shape);
+
+            // Animate Video
+            const $video = $newActivePortal.querySelector(".portal__video");
+            gsap.from($video, {
+                opacity: 0,
+                scale: 1.05,
+                delay: 0.5,
+                duration: 0.6,
+                ease: "power4.out",
+            });
+        }, 150);
+
+        // Apply text shuffle effect
+        // applyTextShuffle(contentID);
     }
 
     // Trigger the portal when the section is entered

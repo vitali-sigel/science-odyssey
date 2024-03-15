@@ -13,20 +13,18 @@ export default class Portal {
 
         // Segment settings
         this.size = 1.5;
-        this.positionZ = 12;
 
         // Animation settings
-        this.numberOfLayers = 120;
+        this.numberOfLayers = 90;
         this.layerDelay = 12;
         this.layerSpacing = 2;
 
         // Camera animation properties
-        this.cameraStartZ = -10; // Assuming this is where your camera starts
         this.cameraEndZ = this.numberOfLayers * this.layerSpacing; // Where the camera should stop
         this.cameraAnimating = false; // Flag to track if camera is currently animating
         this.cameraAnimationStartTime = 0; // When the camera animation starts
         this.cameraAnimationDuration = 2; // Duration of the animation in seconds
-
+        
         // Scene and related objects
         this.scene = null;
         this.camera = null;
@@ -35,18 +33,19 @@ export default class Portal {
         // this.stats = null;
         this.controls = null;
         // this.clock = null;
-
+        
         // Layers
         this.layers = [];
-
+        
         // Portals
         this.squarePortal = [];
         this.hexagonPortal = [];
         this.circlePortal = [];
         this.hexagonDashedLines = null;
         this.activePortal = this.hexagonPortal;
-        this.offsetX = 8;
+        this.offsetX = 12.5;
         this.offsetZ = 20;
+        this.cameraOffsetZ = -7;
         this.offsetXSquarePortal = this.offsetX;
         this.offsetXSHexagonPortal = 0;
         this.offsetXCirclePortal = -this.offsetX;
@@ -123,6 +122,8 @@ export default class Portal {
         // Bind window resize event
         window.addEventListener("resize", () => this.onWindowResize(), false);
 
+        this.onWindowResize();
+
         // Geometry
         this.initialState();
 
@@ -183,7 +184,7 @@ export default class Portal {
             .to(
                 this.camera.position,
                 {
-                    z: -10,
+                    z: this.cameraOffsetZ,
                     duration: 0.6,
                     ease: "power4.out",
                 },
@@ -258,7 +259,7 @@ export default class Portal {
         }
 
         // GSAP defaults
-        gsap.defaults({ duration: 0.8, ease: "power4.out" });
+        gsap.defaults({ duration: 0.9, ease: "power4.out" });
 
         // GSAP animation for camera and portals
         gsap.to(this.camera.position, {
@@ -398,7 +399,7 @@ export default class Portal {
      */
     createSquareGeometry() {
         // const size = this.size; // Define the size of the square
-        const size = 2.25; // Define the size of the square
+        const size = 2.4; // Define the size of the square
         const shape = new THREE.Shape();
         shape.moveTo(-size / 2, -size / 2);
         shape.lineTo(size / 2, -size / 2);
@@ -413,7 +414,8 @@ export default class Portal {
      * @returns {THREE.EdgesGeometry} The created circle geometry.
      */
     createCircleGeometry() {
-        const radius = this.size; // Define the radius of the circle
+        // const radius = this.size; // Define the radius of the circle
+        const radius = 1.4; // Define the radius of the circle
         const segments = 96; // Define the number of segments for the circle
         const circleGeometry = new THREE.CircleGeometry(radius, segments);
         return new THREE.EdgesGeometry(circleGeometry); // Create an EdgesGeometry from your CircleGeometry
@@ -513,12 +515,36 @@ export default class Portal {
         this.composer.addPass(outputPass);
     }
 
+    // onWindowResize() {
+    //     const width = this.container.clientWidth;
+    //     const height = this.container.clientHeight;
+    //     console.log(`Resizing to ${width} x ${height}`);
+    //     this.camera.aspect = width / height;
+    //     this.camera.updateProjectionMatrix();
+    //     this.renderer.setSize(width, height);
+    //     this.composer.setSize(width, height);
+    // }
+
     onWindowResize() {
-        const width = this.container.clientWidth;
-        const height = this.container.clientHeight;
-        this.camera.aspect = width / height;
+        // Get the new container width
+        const newWidth = this.container.clientWidth;
+
+        // Calculate the new height based on your desired aspect ratio
+        // For example, if you want a 16:9 aspect ratio, you'd use:
+        const aspectRatio = 16 / 9;
+        const newHeight = newWidth / aspectRatio;
+
+        // Set the new aspect ratio of the camera
+        this.camera.aspect = aspectRatio;
+        // Update the camera's projection matrix
         this.camera.updateProjectionMatrix();
-        this.renderer.setSize(width, height);
-        this.composer.setSize(width, height);
+
+        // Set the size of the renderer to match the new dimensions
+        this.renderer.setSize(newWidth, newHeight);
+
+        // If using post-processing via EffectComposer, update its size as well
+        if (this.composer) {
+            this.composer.setSize(newWidth, newHeight);
+        }
     }
 }
