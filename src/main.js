@@ -7,8 +7,8 @@ import barba from "@barba/core";
 // Trigger effect on button click
 document.addEventListener("DOMContentLoaded", function () {
     // Init the portals
-    const $portalsContainer = document.getElementById("portalsContainer");
-    if ($portalsContainer) initPortals($portalsContainer);
+    // const $portalsContainer = document.getElementById("portalsContainer");
+    // if ($portalsContainer) initPortals($portalsContainer);
 
     // Init Barba
     const body = document.querySelector("body");
@@ -23,12 +23,17 @@ function initBarba() {
     barba.init({
         transitions: [
             {
-                name: "barba",
+                name: "leave-home",
+                from: {
+                    namespace: ["home"],
+                },
+                to: {
+                    namespace: ["odyssey"],
+                },
                 leave(data) {
+                    console.log("leave home");
                     return gsap.to(data.current.container, {
-                        xPercent: 100,
-                        duration: 0.4,
-                        ease: "power4.in",
+                        duration: 2.5,
                     });
                 },
                 enter(data) {
@@ -39,17 +44,65 @@ function initBarba() {
                         width: "100%",
                     });
                     return gsap.from(data.next.container, {
-                        xPercent: -100,
-                        duration: 0.8,
+                        yPercent: 10,
+                        opacity: 0,
+                        duration: 3,
                         ease: "power4.out",
                         onComplete: () => {
                             gsap.set(data.next.container, {
                                 clearProps: "all",
                             });
-                        }
+                        },
                     });
                 },
             },
+            {
+                name: "enter-home",
+                from: {
+                    namespace: ["odyssey"],
+                },
+                to: {
+                    namespace: ["home"],
+                },
+                leave(data) {
+                    console.log("leave odyssey");
+                    return gsap.to(data.current.container, {
+                        opacity: 0,
+                        duration: 0.6,
+                    });
+                },
+                enter(data) {
+                    window.scrollTo(0, 0);
+                    gsap.set(data.next.container, {
+                        position: "absolute",
+                        top: "0px",
+                        width: "100%",
+                    });
+                    return gsap.from(data.next.container, {
+                        zPercent: 0,
+                        duration: 0.6,
+                        ease: "power4.out",
+                        onComplete: () => {
+                            gsap.set(data.next.container, {
+                                clearProps: "all",
+                            });
+                        },
+                    });
+                },
+            },
+        ],
+        views: [
+            {
+                namespace: "home",
+                beforeEnter(data) {
+                    // Custom code to run when re-entering the homepage
+                    const $portalsContainer =
+                        document.getElementById("portalsContainer");
+                    if ($portalsContainer) initPortals($portalsContainer);
+                },
+                // ... any other hooks
+            },
+            // ... other namespaces if necessary
         ],
     });
 }
@@ -66,7 +119,7 @@ window.applyTextShuffle = function (elementId) {
 };
 
 function initPortals($container) {
-    console.log("initPortals Test");
+    console.log("initPortals");
 
     // Create the portals
     const portals = new Portal($container);
