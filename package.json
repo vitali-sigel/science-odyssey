@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@barba/core": "^2.9.7",
+    "@splinetool/runtime": "^1.0.66",
     "gsap": "^3.9.1",
     "splitting": "^1.0.6",
     "three": "^0.162.0"

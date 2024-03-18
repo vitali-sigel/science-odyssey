@@ -3,6 +3,7 @@ import { gsap } from "gsap";
 import { TypeShuffle } from "./modules/typeShuffle";
 import Portal from "./modules/portalEffect";
 import barba from "@barba/core";
+import { Application } from "@splinetool/runtime";
 
 // Trigger effect on button click
 document.addEventListener("DOMContentLoaded", function () {
@@ -34,6 +35,10 @@ function initBarba() {
                     console.log("leave home");
                     return gsap.to(data.current.container, {
                         duration: 2.5,
+                        onComplete: () => {
+                            data.current.container.style="display: none";
+                            console.log("leave home complete");
+                        }
                     });
                 },
                 enter(data) {
@@ -95,10 +100,49 @@ function initBarba() {
             {
                 namespace: "home",
                 beforeEnter(data) {
-                    // Custom code to run when re-entering the homepage
+                    // Init Videos
+                    const videoElements = document.querySelectorAll(".portal__video");
+                    videoElements.forEach((videoElement) => {
+                        const mp4Src = videoElement.getAttribute("data-mp4");
+                        const webmSrc = videoElement.getAttribute("data-webm");
+                        const video = document.createElement("video");
+                        video.style.width = "100%";
+                        video.autoplay = true;
+                        video.loop = true;
+                        video.playsinline = true;
+                        video.muted = true;
+                        const sourceMp4 = document.createElement("source");
+                        sourceMp4.src = mp4Src;
+                        sourceMp4.type = "video/mp4";
+                        const sourceWebm = document.createElement("source");
+                        sourceWebm.src = webmSrc;
+                        sourceWebm.type = "video/webm";
+                        video.appendChild(sourceMp4);
+                        video.appendChild(sourceWebm);
+                        videoElement.appendChild(video);
+                    });
+
+                    // Init Portals
                     const $portalsContainer =
                         document.getElementById("portalsContainer");
                     if ($portalsContainer) initPortals($portalsContainer);
+                },
+            },
+            {
+                namespace: "odyssey",
+                beforeEnter(data) {
+                    console.log("init odyssey intro spline");
+                    // Init Spline stuff
+                    const $splineContainer =
+                        document.getElementById("splineContainer");
+                    const splineCanvas = document.createElement("canvas");
+                    splineCanvas.id = "splineCanvas";
+                    $splineContainer.appendChild(splineCanvas);
+                    const splineURL =
+                        $splineContainer.getAttribute("data-spline");
+                    if (!splineURL) return;
+                    const app = new Application(splineCanvas);
+                    // app.load(splineURL);
                 },
                 // ... any other hooks
             },
