@@ -24,7 +24,7 @@ export default class Portal {
         this.cameraAnimating = false; // Flag to track if camera is currently animating
         this.cameraAnimationStartTime = 0; // When the camera animation starts
         this.cameraAnimationDuration = 2; // Duration of the animation in seconds
-        
+
         // Scene and related objects
         this.scene = null;
         this.camera = null;
@@ -33,10 +33,10 @@ export default class Portal {
         // this.stats = null;
         this.controls = null;
         // this.clock = null;
-        
+
         // Layers
         this.layers = [];
-        
+
         // Portals
         this.squarePortal = [];
         this.hexagonPortal = [];
@@ -176,31 +176,29 @@ export default class Portal {
     /**
      * Introduces the scene on section enter
      */
-    introduceAnimation() {
+    bringForwardAnimation() {
         const introTL = gsap.timeline();
 
-        introTL
+        introTL.to(
+            this.camera.position,
+            {
+                z: this.cameraOffsetZ,
+                duration: 0.6,
+                ease: "power4.out",
+            },
+            "a"
+        );
 
-            .to(
-                this.camera.position,
-                {
-                    z: this.cameraOffsetZ,
-                    duration: 0.6,
-                    ease: "power4.out",
-                },
-                "a"
-            )
-
-            // Animate hexagonSegment to z = 0
-            .to(
-                this.hexagonPortal[0].position,
-                {
-                    z: 0,
-                    duration: 0.6,
-                    ease: "power4.out",
-                },
-                "a"
-            );
+        // Animate hexagonSegment to z = 0
+        // .to(
+        //     this.hexagonPortal[0].position,
+        //     {
+        //         z: 0,
+        //         duration: 0.6,
+        //         ease: "power4.out",
+        //     },
+        //     "a"
+        // );
     }
 
     // TODO: Disturbes other camera animations
@@ -235,7 +233,7 @@ export default class Portal {
      * @returns {void}
      */
     focus(shape) {
-        console.log(`...focusing on ${shape}...`);
+        // console.log(`...focusing on ${shape}...`);
         const targetX = {
             square: this.offsetXSquarePortal,
             hexagon: this.offsetXSHexagonPortal,
@@ -259,16 +257,11 @@ export default class Portal {
         }
 
         // GSAP defaults
-        gsap.defaults({ duration: 0.9, ease: "power4.out" });
+        gsap.defaults({ duration: 0.9, ease: "power4.inOut" });
 
         // GSAP animation for camera and portals
         gsap.to(this.camera.position, {
             x: targetX,
-        });
-
-        // Move the current active portal to the front
-        gsap.to(this.activePortal[0].position, {
-            z: 0,
         });
 
         // Move the previous portal back
@@ -276,6 +269,11 @@ export default class Portal {
             gsap.to(segment.position, {
                 z: this.offsetZ,
             });
+        });
+
+        // Move the current active portal to the front
+        gsap.to(this.activePortal[0].position, {
+            z: 0,
         });
     }
 
