@@ -1,4 +1,6 @@
 import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import Portal from "../effects/portalEffect";
 
 export default class PortalManager {
@@ -14,41 +16,40 @@ export default class PortalManager {
         this.portalTriggers = {};
         this.initTriggers();
         this.initVideos();
+        this.initVisibility();
+        this.snapInView();
     }
 
-    initTriggers() {
-        // Initialize triggers for Square, Hexagon, and Circle portals
-        this.portalTriggers.square = this.setupTrigger("portalTriggerSquare");
-        this.portalTriggers.hexagon = this.setupTrigger("portalTriggerHexagon");
-        this.portalTriggers.circle = this.setupTrigger("portalTriggerCircle");
+    snapInView() {
+        gsap.registerPlugin(ScrollToPlugin, ScrollTrigger);
 
-        // Adjust the display of triggers based on initial setup
-        //  this.portalTriggers.hexagon.style.display = "none";
-    }
-
-    setupTrigger(triggerId) {
-        const trigger = document.getElementById(triggerId);
-        if (!trigger) {
-            console.warn("No portal trigger found with ID: " + triggerId);
-            return;
-        }
-
-        trigger.addEventListener("click", (e) => this.togglePortal(e.target));
-
-        const contentId = trigger.getAttribute("data-content");
-        const content = document.getElementById(contentId);
-        const cta = content?.querySelector(".btn");
-
-        cta?.addEventListener("click", () => {
-            this.animatePortalContent(content);
-            this.portals.start();
+        ScrollTrigger.create({
+            markers: true,
+            trigger: "#homePortals",
+            once: true,
+            start: "top 20%",
+            onEnter: () => {
+                // Snap to the portals section with GSAP
+                gsap.to(window, {
+                    scrollTo: {
+                        y: "#homePortals",
+                        autoKill: false, // This prevents ScrollTrigger from stopping the scroll animation
+                    },
+                    duration: 0.8, // Duration of the scroll animation
+                    ease: "power1.inOut", // Easing for the snap effect
+                });
+                this.portals.bringForwardAnimation();
+                const $initialTrigger = document.getElementById(
+                    "portalTriggerHexagon"
+                );
+                this.togglePortal($initialTrigger, true);
+            },
         });
+    }
 
-        // Adjust the display of triggers based on initial setup
-        trigger.style.display =
-            triggerId === "portalTriggerHexagon" ? "none" : "block";
-
-        return trigger;
+    initVisibility() {
+        const $activePortal = document.querySelector(".portal--active");
+        gsap.set($activePortal, { autoAlpha: 0 });
     }
 
     /*
@@ -91,6 +92,11 @@ export default class PortalManager {
                 console.warn("Shape not found.");
         }
 
+        // Set the portal visibility
+        if (initially) {
+            gsap.set($container, { autoAlpha: 1 });
+        }
+
         // Focus Animation on the selected portal shape
         this.portals.focus(shape);
 
@@ -99,27 +105,37 @@ export default class PortalManager {
         );
 
         // Hide old video
-        gsap.fromTo($oldVideo, {
-            opacity: 1,
-            scale: 1,
-        }, {
-            opacity: 0,
-            scale: 0.97,
-            duration: 0.9,
-            ease: "power4.out",
-        });
+        if (!initially) {
+            gsap.fromTo(
+                $oldVideo,
+                {
+                    opacity: 1,
+                    scale: 1,
+                },
+                {
+                    opacity: 0,
+                    scale: 0.97,
+                    duration: 0.9,
+                    ease: "power4.out",
+                }
+            );
+        }
 
         // Show new video
-        gsap.fromTo($video, {
-            opacity: 0,
-            scale: 0.97,
-        }, {
-            opacity: 1,
-            scale: 1,
-            duration: 0.9,
-            delay: 0.6,
-            ease: "power4.out",
-        });
+        gsap.fromTo(
+            $video,
+            {
+                opacity: 0,
+                scale: 0.97,
+            },
+            {
+                opacity: 1,
+                scale: 1,
+                duration: 0.9,
+                delay: 0.6,
+                ease: "power4.out",
+            }
+        );
 
         // Apply Text shuffle effect
         applyTextShuffle(contentId);
@@ -146,6 +162,38 @@ export default class PortalManager {
             scale: 0.9,
             ease: "power4.out",
         });
+    }
+
+    initTriggers() {
+        // Initialize triggers for Square, Hexagon, and Circle portals
+        this.portalTriggers.square = this.setupTrigger("portalTriggerSquare");
+        this.portalTriggers.hexagon = this.setupTrigger("portalTriggerHexagon");
+        this.portalTriggers.circle = this.setupTrigger("portalTriggerCircle");
+    }
+
+    setupTrigger(triggerId) {
+        const trigger = document.getElementById(triggerId);
+        if (!trigger) {
+            console.warn("No portal trigger found with ID: " + triggerId);
+            return;
+        }
+
+        trigger.addEventListener("click", (e) => this.togglePortal(e.target));
+
+        const contentId = trigger.getAttribute("data-content");
+        const content = document.getElementById(contentId);
+        const cta = content?.querySelector(".btn");
+
+        cta?.addEventListener("click", () => {
+            this.animatePortalContent(content);
+            this.portals.start();
+        });
+
+        // Adjust the display of triggers based on initial setup
+        trigger.style.display =
+            triggerId === "portalTriggerHexagon" ? "none" : "block";
+
+        return trigger;
     }
 
     initVideos = () => {

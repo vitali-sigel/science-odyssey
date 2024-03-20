@@ -198,7 +198,7 @@ export const activateHomePortals = (portalManager) => {
         markers: true,
         trigger: "#homePortals",
         once: true,
-        start: "top center",
+        start: "top 20%",
         onEnter: () => {
             portalManager.portals.bringForwardAnimation();
             const $initialTrigger = document.getElementById(
@@ -215,5 +215,5 @@ export const activateHomePortals = (portalManager) => {
 export const setupHomeView = (data) => {
     const $portalsContainer = document.getElementById("portalsContainer");
     const portalManager = new PortalManager($portalsContainer);
-    activateHomePortals(portalManager);
+    // activateHomePortals(portalManager);
 };

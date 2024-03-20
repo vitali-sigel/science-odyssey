@@ -18,7 +18,7 @@ import { Application } from "@splinetool/runtime";
 document.addEventListener("DOMContentLoaded", function () {
 
     // Init Lenis smooth scrolling
-    new LenisManager();
+    // new LenisManager();
 
     // Init Custom Type Shuffle Effect
     new TypeShuffleManager();

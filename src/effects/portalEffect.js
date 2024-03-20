@@ -96,7 +96,7 @@ export default class Portal {
 
         // Camera
         this.camera = new THREE.PerspectiveCamera(
-            30,
+            60,
             this.container.clientWidth / this.container.clientHeight,
             1,
             300
@@ -122,6 +122,7 @@ export default class Portal {
         // Bind window resize event
         window.addEventListener("resize", () => this.onWindowResize(), false);
 
+        // Set the size initialy
         this.onWindowResize();
 
         // Geometry
@@ -513,36 +514,44 @@ export default class Portal {
         this.composer.addPass(outputPass);
     }
 
-    // onWindowResize() {
-    //     const width = this.container.clientWidth;
-    //     const height = this.container.clientHeight;
-    //     console.log(`Resizing to ${width} x ${height}`);
-    //     this.camera.aspect = width / height;
-    //     this.camera.updateProjectionMatrix();
-    //     this.renderer.setSize(width, height);
-    //     this.composer.setSize(width, height);
-    // }
-
     onWindowResize() {
-        // Get the new container width
-        const newWidth = this.container.clientWidth;
+        // Ensure the renderer fills the whole viewport
+        const newWidth = window.innerWidth;
+        const newHeight = window.innerHeight;
+        this.renderer.setSize(newWidth, newHeight);
 
-        // Calculate the new height based on your desired aspect ratio
-        // For example, if you want a 16:9 aspect ratio, you'd use:
-        const aspectRatio = 16 / 9;
-        const newHeight = newWidth / aspectRatio;
+        // Calculate the new aspect ratio of the window
+        const newAspectRatio = newWidth / newHeight;
 
-        // Set the new aspect ratio of the camera
-        this.camera.aspect = aspectRatio;
+        // Adjust the camera's FOV based on the new aspect ratio
+        this.camera.fov = this.adjustFOV(newAspectRatio);
+
+        // Log the new aspect ratio and FOV to the console for debugging
+        console.log("aspect ratio: ", newAspectRatio);
+        console.log("fov: ", this.camera.fov);
+
         // Update the camera's projection matrix
         this.camera.updateProjectionMatrix();
-
-        // Set the size of the renderer to match the new dimensions
-        this.renderer.setSize(newWidth, newHeight);
 
         // If using post-processing via EffectComposer, update its size as well
         if (this.composer) {
             this.composer.setSize(newWidth, newHeight);
         }
+    }
+
+    adjustFOV(newAspectRatio) {
+        // Define the base FOV that you want to maintain vertically
+        const baseVerticalFOV = 30; // This is an arbitrary value; adjust it based on your scene
+
+        // Calculate the new FOV
+        // This FOV calculation maintains the same vertical size regardless of width changes
+        const newFOV =
+            2 *
+            Math.atan(
+                Math.tan((baseVerticalFOV * Math.PI) / 180 / 2) / newAspectRatio
+            ) *
+            (180 / Math.PI);
+
+        return newFOV * 1.7;
     }
 }
