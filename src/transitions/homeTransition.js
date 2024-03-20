@@ -11,6 +11,4 @@ export const leaveHomeTransition = (data) => {
     });
 };
 
-export const enterHomeTransition = (data) => {
-
-};
+export const enterHomeTransition = (data) => {};

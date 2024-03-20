@@ -18,10 +18,10 @@
     estree-walker "^2.0.1"
     picomatch "^2.2.2"
 
-"@splinetool/runtime@^1.0.66":
-  version "1.0.66"
-  resolved "https://registry.npmjs.org/@splinetool/runtime/-/runtime-1.0.66.tgz"
-  integrity sha512-5rmTc7Uv7v9ISUSMYfLV/WjLG7L7yR0KVNF7At7QpAcXUnxG3jPq0NaLRFHjEcwDF+OeWLNJpP22fg/z46GWNg==
+"@splinetool/runtime@^1.0.74":
+  version "1.0.74"
+  resolved "https://registry.npmjs.org/@splinetool/runtime/-/runtime-1.0.74.tgz"
+  integrity sha512-88pZYEKWmzONol62CCt/2Zdsqb/Iuxwq0RCaTWItv6sqe3gquHIucArCavlC6pmVD8z1AERF2p9yNL5yzRHniA==
   dependencies:
     on-change "^4.0.0"
     semver-compare "^1.0.0"

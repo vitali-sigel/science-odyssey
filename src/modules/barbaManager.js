@@ -7,11 +7,10 @@ import {
     leaveOdysseyTransition,
     enterOdysseyTransition,
 } from "../transitions/odysseyTransition";
-import { setupHomeView } from "../views/homeView";
+import { setupHomeView, cleanupHomeView } from "../views/homeView";
 import { setupOdysseyView } from "../views/odysseyView";
 
 export default class BarbaManager {
-    
     constructor() {
         this.barba = barba;
         this.init();
@@ -25,6 +24,7 @@ export default class BarbaManager {
                     from: { namespace: ["home"] },
                     to: { namespace: ["odyssey"] },
                     leave: leaveHomeTransition,
+                    afterLeave: cleanupHomeView,
                     enter: enterOdysseyTransition,
                 },
                 {

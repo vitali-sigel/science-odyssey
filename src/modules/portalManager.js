@@ -12,8 +12,11 @@ export default class PortalManager {
             return;
         }
 
+        console.log("init portal manager");
+
         this.portals = new Portal(this.$container);
         this.portalTriggers = {};
+        this.portalScrollTrigger = null;
         this.initTriggers();
         this.initVideos();
         this.initVisibility();
@@ -23,22 +26,29 @@ export default class PortalManager {
     snapInView() {
         gsap.registerPlugin(ScrollToPlugin, ScrollTrigger);
 
-        ScrollTrigger.create({
+        this.portalScrollTrigger = ScrollTrigger.create({
             markers: true,
             trigger: "#homePortals",
             once: true,
             start: "top 20%",
             onEnter: () => {
+                console.log("Snap to portals section");
+                
+                // TODO: Better snapping
                 // Snap to the portals section with GSAP
-                gsap.to(window, {
-                    scrollTo: {
-                        y: "#homePortals",
-                        autoKill: false, // This prevents ScrollTrigger from stopping the scroll animation
-                    },
-                    duration: 0.8, // Duration of the scroll animation
-                    ease: "power1.inOut", // Easing for the snap effect
-                });
+                // gsap.to(window, {
+                //     scrollTo: {
+                //         y: "#homePortals",
+                //         // autoKill: false, // This prevents ScrollTrigger from stopping the scroll animation
+                //     },
+                //     duration: 0.8, // Duration of the scroll animation
+                //     ease: "power1.inOut", // Easing for the snap effect
+                // });
+
+                // Animate portal effect
                 this.portals.bringForwardAnimation();
+
+                // Toggle the initial portal
                 const $initialTrigger = document.getElementById(
                     "portalTriggerHexagon"
                 );

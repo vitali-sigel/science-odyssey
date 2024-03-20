@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@barba/core": "^2.9.7",
-    "@splinetool/runtime": "^1.0.66",
+    "@splinetool/runtime": "^1.0.74",
     "@studio-freight/lenis": "^1.0.42",
     "gsap": "npm:@gsap/shockingly@^3.12.5",
     "splitting": "^1.0.6",

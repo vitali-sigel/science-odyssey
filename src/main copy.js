@@ -136,7 +136,7 @@ function initBarba() {
                 namespace: "odyssey",
                 beforeEnter(data) {
                     // Init Odyssey Intro Spline
-                    // initOdysseyIntroSpline(); // TODO: UNCOMMENT THIS LINE
+                    initOdysseyIntroSpline(); // TODO: UNCOMMENT THIS LINE
 
                     // Init Odyssey Story Scrolling
                     initOdysseyStoryScrolling();

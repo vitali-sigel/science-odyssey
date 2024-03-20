@@ -1,5 +1,9 @@
-import { gsap } from "gsap";
+import OdysseyGalleryManager from "../modules/odysseyGalleryManager";
+import OdysseyStoryManager from "../modules/odysseyStoryManager";
+import OdysseyIntro from "../modules/odysseyIntro";
 
 export const setupOdysseyView = (data) => {
-    console.log("VIEW Odyssey");
+    new OdysseyIntro();
+    new OdysseyStoryManager();
+    new OdysseyGalleryManager();
 };
