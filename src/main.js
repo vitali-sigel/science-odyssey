@@ -1,16 +1,39 @@
 import "./styles/style.css";
+import Lenis from "@studio-freight/lenis";
 import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Draggable } from "gsap/Draggable";
+import { Flip } from "gsap/Flip";
+import { ScrollToPlugin } from "gsap/ScrollToPlugin";
+import { InertiaPlugin } from "gsap/InertiaPlugin";
 import { TypeShuffle } from "./modules/typeShuffle";
 import Portal from "./modules/portalEffect";
 import barba from "@barba/core";
 import { Application } from "@splinetool/runtime";
 
+// Lenis code - start
+const lenis = new Lenis();
+
+function raf(time) {
+    lenis.raf(time);
+    requestAnimationFrame(raf);
+}
+
+requestAnimationFrame(raf);
+// Lenis code - end
+
+
+// Register GSAP plugins
+gsap.registerPlugin(
+    ScrollTrigger,
+    Draggable,
+    InertiaPlugin,
+    Flip,
+    ScrollToPlugin
+);
+
 // Trigger effect on button click
 document.addEventListener("DOMContentLoaded", function () {
-    // Init the portals
-    // const $portalsContainer = document.getElementById("portalsContainer");
-    // if ($portalsContainer) initPortals($portalsContainer);
-
     // Init Barba
     const body = document.querySelector("body");
     if (body.getAttribute("data-barba") === "wrapper") {
@@ -36,9 +59,9 @@ function initBarba() {
                     return gsap.to(data.current.container, {
                         duration: 2.5,
                         onComplete: () => {
-                            data.current.container.style="display: none";
+                            data.current.container.style = "display: none";
                             console.log("leave home complete");
-                        }
+                        },
                     });
                 },
                 enter(data) {
@@ -101,54 +124,258 @@ function initBarba() {
                 namespace: "home",
                 beforeEnter(data) {
                     // Init Videos
-                    const videoElements = document.querySelectorAll(".portal__video");
-                    videoElements.forEach((videoElement) => {
-                        const mp4Src = videoElement.getAttribute("data-mp4");
-                        const webmSrc = videoElement.getAttribute("data-webm");
-                        const video = document.createElement("video");
-                        video.style.width = "100%";
-                        video.autoplay = true;
-                        video.loop = true;
-                        video.playsinline = true;
-                        video.muted = true;
-                        const sourceMp4 = document.createElement("source");
-                        sourceMp4.src = mp4Src;
-                        sourceMp4.type = "video/mp4";
-                        const sourceWebm = document.createElement("source");
-                        sourceWebm.src = webmSrc;
-                        sourceWebm.type = "video/webm";
-                        video.appendChild(sourceMp4);
-                        video.appendChild(sourceWebm);
-                        videoElement.appendChild(video);
-                    });
+                    initHomePortalVideo();
 
                     // Init Portals
                     const $portalsContainer =
                         document.getElementById("portalsContainer");
                     if ($portalsContainer) initPortals($portalsContainer);
+
+                    /*
+                     * Snap to portals section
+                     */
+                    // Target only the section with the class '.home-section--portals'
+                    // const section = document.querySelector(
+                    //     ".home-section--portals"
+                    // );
+
+                    // ScrollTrigger.create({
+                    //     trigger: section,
+                    //     start: "top top", // When the top of the section hits the top of the viewport
+                    //     end: "bottom center", // When the bottom of the section hits the top of the viewport
+                    //     onEnter: () => scrollToSection(section), // Scroll to the section when entering
+                    //     onEnterBack: () => scrollToSection(section), // Scroll to the section when entering from the bottom
+                    //     markers: true, // Optional: Shows markers for debugging
+                    // });
+
+                    // function scrollToSection(section) {
+                    //     gsap.to(window, {
+                    //         scrollTo: { y: section.offsetTop, autoKill: true }, // Use GSAP's scrollTo plugin
+                    //         duration: 1, // Duration of the scroll animation
+                    //     });
+                    // }
                 },
             },
             {
                 namespace: "odyssey",
                 beforeEnter(data) {
-                    console.log("init odyssey intro spline");
-                    // Init Spline stuff
-                    const $splineContainer =
-                        document.getElementById("splineContainer");
-                    const splineCanvas = document.createElement("canvas");
-                    splineCanvas.id = "splineCanvas";
-                    $splineContainer.appendChild(splineCanvas);
-                    const splineURL =
-                        $splineContainer.getAttribute("data-spline");
-                    if (!splineURL) return;
-                    const app = new Application(splineCanvas);
-                    // app.load(splineURL);
+                    // Init Odyssey Intro Spline
+                    // initOdysseyIntroSpline(); // TODO: UNCOMMENT THIS LINE
+
+                    // Init Odyssey Story Scrolling
+                    initOdysseyStoryScrolling();
+
+                    // init Odyssey gallery
+                    initOdysseyGallery();
                 },
                 // ... any other hooks
             },
             // ... other namespaces if necessary
         ],
     });
+}
+
+// Initialize the odyssey gallery
+function initOdysseyGallery() {
+    // Make the gallery draggable
+    console.log("init odyssey gallery drag");
+    const $container = document.getElementById("odysseyGalleryContainer");
+    const $galleryItems = $container.querySelectorAll(
+        ".odyssey-gallery__item:not(.odyssey-gallery__item--title)"
+    );
+    initOdysseyGallerySpline();
+
+    Draggable.create($container, {
+        type: "x,y",
+        bounds: window,
+        inertia: true,
+        onDragStart: () => {
+            gsap.to($galleryItems, {
+                scale: 0.95,
+                duration: 0.4,
+                ease: "power4.out",
+            });
+        },
+        onDragEnd: () => {
+            gsap.to($galleryItems, {
+                scale: 1,
+                duration: 0.8,
+                ease: "power4.out",
+            });
+        },
+    });
+
+    // Make the images clickable
+    console.log("init odyssey gallery click");
+    let isActive = false;
+    let $sourceContainer = null;
+    const $target = document.querySelector(
+        ".odyssey-gallery__destination-target"
+    );
+    const $targetContainer = document.querySelector(
+        ".odyssey-gallery__destination"
+    );
+
+    $galleryItems.forEach((item) => {
+        item.addEventListener("click", (e) => {
+            if (isActive) return;
+            $sourceContainer = item;
+            swapImage(item, $target, true);
+        });
+    });
+
+    $targetContainer.addEventListener("click", (e) => {
+        if (isActive) {
+            swapImage($target, $sourceContainer, false);
+        }
+    });
+
+    // Timeline for zoom image
+    const $backdrop = $targetContainer.querySelector(
+        ".odyssey-gallery__destination-backdrop"
+    );
+    const zoomImageTL = gsap.timeline({ paused: true });
+
+    // Define the zoom image timeline
+    zoomImageTL
+        .from(
+            $backdrop,
+            { duration: 0.8, opacity: 0, ease: "power4.inOut" },
+            "start"
+        )
+        .to(
+            $container,
+            { duration: 0.8, filter: "blur(6px)", ease: "power4.inOut" },
+            "start"
+        );
+
+    function swapImage(originalContainer, newContainer, setActive) {
+        const $image = originalContainer.querySelector("img");
+        const state = Flip.getState($image);
+
+        // Move the image to the new container
+        ($image.parentNode === originalContainer
+            ? newContainer
+            : originalContainer
+        ).appendChild($image);
+
+        // Animate the new container
+        if (setActive) {
+            $targetContainer.classList.add(
+                "odyssey-gallery__destination--active"
+            );
+            zoomImageTL.play();
+        }
+        // Reverse the animation
+        else {
+            zoomImageTL.reverse();
+            $targetContainer.classList.remove(
+                "odyssey-gallery__destination--active"
+            );
+        }
+
+        $image.parentNode.style.zIndex = 3000;
+        Flip.from(state, {
+            duration: 0.8,
+            ease: "power4.inOut",
+            absolute: true,
+            delay: 0.1,
+            onComplete: () => {
+                $image.parentNode.style.zIndex = "";
+            },
+        });
+
+        isActive = setActive;
+    }
+
+    // Activate Spline for gallery
+    function initOdysseyGallerySpline() {
+        console.log("init odyssey gallery spline");
+        // Init Spline stuff
+        const $splineContainer = document.querySelector(
+            ".odyssey-gallery__spline-container"
+        );
+        const splineCanvas = document.createElement("canvas");
+        splineCanvas.id = "gallerySplineCanvas";
+        $splineContainer.appendChild(splineCanvas);
+        const splineURL = $splineContainer.getAttribute("data-spline");
+        if (!splineURL) return;
+        const app = new Application(splineCanvas);
+        app.load(splineURL);
+        const $canvas = document.getElementById("gallerySplineCanvas");
+        setTimeout(() => {
+            $canvas.style.width = "100%";
+            $canvas.style.height = "auto";
+        }, 500);
+    }
+}
+
+// Initialize the odyssey story scrolling
+function initOdysseyStoryScrolling() {
+    const $scenes = document.querySelectorAll(".odyssey-story__scene");
+    $scenes.forEach((scene) => {
+        createScrollScene(scene);
+    });
+
+    function createScrollScene(scene) {
+        const $trigger = scene.querySelector(".scene-trigger"),
+            $track = scene.querySelector(".scene-track"),
+            $lead = scene.querySelector(".odyssey-story__lead-wrapper"),
+            $pin = scene.querySelector(".scene-pin"),
+            $image = scene.querySelector(".odyssey-story__image-wrapper");
+
+        const tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: scene,
+                start: "top top",
+                end: "bottom bottom",
+                scrub: true,
+                // markers: true,
+                pin: $lead,
+            },
+        });
+
+        tl.from($lead, { opacity: 0 }, "a");
+        tl.from($lead, { opacity: 1 }, "b");
+    }
+}
+
+// Initialize the home portal video
+function initHomePortalVideo() {
+    const videoElements = document.querySelectorAll(".portal__video");
+    videoElements.forEach((videoElement) => {
+        const mp4Src = videoElement.getAttribute("data-mp4");
+        const webmSrc = videoElement.getAttribute("data-webm");
+        const video = document.createElement("video");
+        video.style.width = "100%";
+        video.autoplay = true;
+        video.loop = true;
+        video.playsinline = true;
+        video.muted = true;
+        const sourceMp4 = document.createElement("source");
+        sourceMp4.src = mp4Src;
+        sourceMp4.type = "video/mp4";
+        const sourceWebm = document.createElement("source");
+        sourceWebm.src = webmSrc;
+        sourceWebm.type = "video/webm";
+        video.appendChild(sourceMp4);
+        video.appendChild(sourceWebm);
+        videoElement.appendChild(video);
+    });
+}
+
+// Initialize the intro spline of the odyssey sup page
+function initOdysseyIntroSpline() {
+    console.log("init odyssey intro spline");
+    // Init Spline stuff
+    const $splineContainer = document.getElementById("splineContainer");
+    const splineCanvas = document.createElement("canvas");
+    splineCanvas.id = "splineCanvas";
+    $splineContainer.appendChild(splineCanvas);
+    const splineURL = $splineContainer.getAttribute("data-spline");
+    if (!splineURL) return;
+    const app = new Application(splineCanvas);
+    app.load(splineURL);
 }
 
 // Function to apply the effect to a specific element by ID
@@ -191,6 +418,7 @@ function initPortals($container) {
     const $portalTriggerHexagon = document.getElementById(
         "portalTriggerHexagon"
     );
+    $portalTriggerHexagon.style.display = "none";
     $portalTriggerHexagon.addEventListener("click", (e) =>
         togglePortal(e.target)
     );
@@ -239,10 +467,11 @@ function initPortals($container) {
                 $portalTriggerSquare.style.display = "none";
                 $portalTriggerCircle.style.display = "none";
                 $portalTriggerHexagon.style.display = "block";
-                $portalTriggerHexagon.style.left = "90%";
+                $portalTriggerHexagon.style.left = "auto";
                 $portalTriggerHexagon.style.right = "0";
                 break;
             case "hexagon":
+                console.log("hexagon");
                 $portalTriggerSquare.style.display = "block";
                 $portalTriggerHexagon.style.display = "none";
                 $portalTriggerCircle.style.display = "block";
@@ -281,16 +510,15 @@ function initPortals($container) {
                 ease: "power4.out",
             });
         }, 150);
-
-        // Apply text shuffle effect
-        // applyTextShuffle(contentID);
     }
+
+    let hasTriggered = false;
 
     // Trigger the portal when the section is entered
     let observer = new IntersectionObserver(
         function (entries) {
             entries.forEach((entry) => {
-                if (entry.isIntersecting) {
+                if (entry.isIntersecting && !hasTriggered) {
                     console.log(entry.target.id + " is in view");
                     const $activePortal =
                         document.querySelector(".portal--active");
@@ -304,6 +532,7 @@ function initPortals($container) {
                     const activePortalID = $activePortal.id;
                     applyTextShuffle(activePortalID);
                     portals.introduceAnimation();
+                    hasTriggered = true; // Set the flag to true
                 }
             });
         },
