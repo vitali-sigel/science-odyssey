@@ -1,4 +1,4 @@
-import "./styles/style.css";
+// import "./styles/style.css";
 import LenisManager from "./modules/lenisManager";
 import BarbaManager from "./modules/barbaManager";
 import TypeShuffleManager from "./modules/typeShuffleManager";
