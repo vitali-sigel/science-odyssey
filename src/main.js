@@ -1,12 +1,10 @@
-// import "./styles/style.css";
+import "./styles/style.css";
 import LenisManager from "./modules/lenisManager";
 import BarbaManager from "./modules/barbaManager";
 import TypeShuffleManager from "./modules/typeShuffleManager";
 
 // Trigger effect on button click
 document.addEventListener("DOMContentLoaded", function () {
-
-    console.log("tester");
 
     // Init Lenis smooth scrolling
     // new LenisManager();

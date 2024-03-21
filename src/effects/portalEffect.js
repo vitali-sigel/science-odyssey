@@ -1,9 +1,14 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
-import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+// import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+// import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+// import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+// import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+// import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+// OutputPass is not a standard Three.js addon. If you have this as a custom extension, ensure the path is correct.
 import { gsap } from "gsap";
 
 export default class Portal {
@@ -526,9 +531,10 @@ export default class Portal {
         // Adjust the camera's FOV based on the new aspect ratio
         this.camera.fov = this.adjustFOV(newAspectRatio);
 
+        // TODO: Add breakpoint for mobile
         // Log the new aspect ratio and FOV to the console for debugging
-        console.log("aspect ratio: ", newAspectRatio);
-        console.log("fov: ", this.camera.fov);
+        // console.log("aspect ratio: ", newAspectRatio);
+        // console.log("fov: ", this.camera.fov);
 
         // Update the camera's projection matrix
         this.camera.updateProjectionMatrix();

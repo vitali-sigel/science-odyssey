@@ -1,6 +1,4 @@
 import PortalManager from "../modules/portalManager";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { gsap } from "gsap";
 
 let portalManager = null;  // Make portalManager accessible outside setupHomeView
 /*

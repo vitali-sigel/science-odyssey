@@ -5,12 +5,15 @@ import { InertiaPlugin } from "gsap/InertiaPlugin";
 import { Flip } from "gsap/Flip";
 // import { Application } from "@splinetool/runtime";
 
-
 export default class OdysseyGalleryManager {
     constructor() {
         // Register GSAP plugins
-        gsap.registerPlugin(ScrollTrigger, Draggable, InertiaPlugin, Flip);
         this.$gallery = document.getElementById("odysseyGallery");
+        if (!this.$gallery) {
+            console.warn("Could not create Odyssey Gallery - container not found.");
+            return;
+        }
+        gsap.registerPlugin(ScrollTrigger, Draggable, InertiaPlugin, Flip);
         this.isActive = false;
         this.$sourceContainer = null;
         this.zoomImageTL = null;

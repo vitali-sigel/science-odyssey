@@ -17,9 +17,9 @@ export default class OdysseyIntroSplineManager {
             return;
         }
 
-        const splineCanvas = document.createElement("canvas");
-        splineCanvas.id = "splineCanvas";
-        this.splineContainer.appendChild(splineCanvas);
+        // const splineCanvas = document.createElement("canvas");
+        // splineCanvas.id = "splineCanvas";
+        // this.splineContainer.appendChild(splineCanvas);
 
         const splineURL = this.splineContainer.getAttribute("data-spline");
         if (!splineURL) {
@@ -27,17 +27,37 @@ export default class OdysseyIntroSplineManager {
             return;
         }
 
-        // Assuming `Application` is imported or globally available
-        this.app = new Application(splineCanvas);
-        this.app
-            .load(splineURL)
-            .then(() => {
-                console.log("Spline loaded successfully.");
-                // Perform additional actions after loading if necessary
-            })
-            .catch((error) => {
-                console.error("Error loading spline:", error);
-            });
+        // // Assuming `Application` is imported or globally available
+        // this.app = new Application(splineCanvas);
+        // this.app
+        //     .load(splineURL)
+        //     .then(() => {
+        //         console.log("Spline loaded successfully.");
+        //         // Perform additional actions after loading if necessary
+        //     })
+        //     .catch((error) => {
+        //         console.error("Error loading spline:", error);
+        //     });
+
+        const iframe = document.createElement("iframe");
+        iframe.src = splineURL;
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+        this.splineContainer.appendChild(iframe);
+
+        // You need to wait for the iframe to load before accessing its contents
+        document.querySelector("iframe").onload = function () {
+            var iframe = document.querySelector("iframe").contentDocument;
+            console.log(iframe);
+            var css = ".spline-watermark { display: none; }";
+            var style = document.createElement("style");
+
+            if (iframe.head) {
+                style.type = "text/css";
+                style.appendChild(document.createTextNode(css));
+                iframe.head.appendChild(style);
+            }
+        };
     }
 
     // Optionally, if there's any cleanup needed
