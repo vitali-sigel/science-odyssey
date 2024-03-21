@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import path from 'path';
 import glsl from 'vite-plugin-glsl';
 
 // vite.config.js
@@ -29,4 +30,10 @@ export default defineConfig({
       external: ['jquery'],
     },
   },
+  // resolve: {
+  //   alias: {
+  //     'three': path.resolve(__dirname, './node_modules/three'),
+  //     // Add other aliases if necessary
+  //   },
+  // },
 })

@@ -3,7 +3,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Draggable } from "gsap/Draggable";
 import { InertiaPlugin } from "gsap/InertiaPlugin";
 import { Flip } from "gsap/Flip";
-import { Application } from "@splinetool/runtime";
+// import { Application } from "@splinetool/runtime";
 
 
 export default class OdysseyGalleryManager {

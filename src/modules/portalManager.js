@@ -27,7 +27,7 @@ export default class PortalManager {
         gsap.registerPlugin(ScrollToPlugin, ScrollTrigger);
 
         this.portalScrollTrigger = ScrollTrigger.create({
-            markers: true,
+            // markers: true,
             trigger: "#homePortals",
             once: true,
             start: "top 20%",

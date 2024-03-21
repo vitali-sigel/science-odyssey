@@ -18,6 +18,7 @@
     "@splinetool/runtime": "^1.0.74",
     "@studio-freight/lenis": "^1.0.42",
     "gsap": "npm:@gsap/shockingly@^3.12.5",
+    "path": "^0.12.7",
     "splitting": "^1.0.6",
     "three": "^0.162.0"
   }

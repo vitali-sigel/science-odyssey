@@ -1,4 +1,5 @@
 import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 export default class OdysseyStoryManager {
     constructor() {
@@ -16,6 +17,8 @@ export default class OdysseyStoryManager {
         const $lead = scene.querySelector(".odyssey-story__lead-wrapper"),
             $pin = scene.querySelector(".scene-pin"),
             $image = scene.querySelector(".odyssey-story__image-wrapper");
+
+        gsap.registerPlugin(ScrollTrigger);
 
         const tl = gsap.timeline({
             scrollTrigger: {
