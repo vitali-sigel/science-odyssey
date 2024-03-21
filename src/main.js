@@ -6,6 +6,8 @@ import TypeShuffleManager from "./modules/typeShuffleManager";
 // Trigger effect on button click
 document.addEventListener("DOMContentLoaded", function () {
 
+    console.log("hello");
+
     // Init Lenis smooth scrolling
     // new LenisManager();
 
