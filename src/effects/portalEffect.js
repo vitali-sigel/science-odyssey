@@ -4,15 +4,20 @@ import * as THREE from "three";
 // import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 // import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 // import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
-// OutputPass is not a standard Three.js addon. If you have this as a custom extension, ensure the path is correct.
+
+
 import { gsap } from "gsap";
 
 export default class Portal {
     constructor(container) {
+
+        console.log("start portal effects");
+
         // Passed in parameters
         this.container = container;
 
@@ -511,12 +516,12 @@ export default class Portal {
         bloomPass.strength = this.params.strength;
         bloomPass.radius = this.params.radius;
 
-        const outputPass = new OutputPass();
+        // const outputPass = new OutputPass();
 
         this.composer = new EffectComposer(this.renderer);
         this.composer.addPass(renderScene);
         this.composer.addPass(bloomPass);
-        this.composer.addPass(outputPass);
+        // this.composer.addPass(outputPass);
     }
 
     onWindowResize() {
