@@ -14,13 +14,12 @@ export default defineConfig({
     },
     build: {
       minify: true,
-      // manifest: true,
-      manifest: false,
+      manifest: true,
       rollupOptions: {
         input: './src/main.js',
         output: {
           format: 'umd',
-          entryFileNames: 'main.js',
+          entryFileNames: 'main.[hash].js',
           esModule: false,
           compact: true,
           globals: {
