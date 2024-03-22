@@ -44,20 +44,6 @@ export default class OdysseyIntroSplineManager {
         iframe.style.width = "100%";
         iframe.style.height = "100%";
         this.splineContainer.appendChild(iframe);
-
-        // You need to wait for the iframe to load before accessing its contents
-        document.querySelector("iframe").onload = function () {
-            var iframe = document.querySelector("iframe").contentDocument;
-            console.log(iframe);
-            var css = ".spline-watermark { display: none; }";
-            var style = document.createElement("style");
-
-            if (iframe.head) {
-                style.type = "text/css";
-                style.appendChild(document.createTextNode(css));
-                iframe.head.appendChild(style);
-            }
-        };
     }
 
     // Optionally, if there's any cleanup needed

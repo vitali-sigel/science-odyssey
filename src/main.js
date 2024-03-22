@@ -2,6 +2,7 @@ import "./styles/style.css";
 import LenisManager from "./modules/lenisManager";
 import BarbaManager from "./modules/barbaManager";
 import TypeShuffleManager from "./modules/typeShuffleManager";
+import ThreeTest from "./modules/threeTest";
 
 // Trigger effect on button click
 document.addEventListener("DOMContentLoaded", function () {
@@ -19,4 +20,7 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
         console.log("barba html structure is not set");
     }
+
+    // Test Bloom
+    new ThreeTest();
 });

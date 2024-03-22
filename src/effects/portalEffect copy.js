@@ -1,12 +1,24 @@
 import * as THREE from "three";
+// import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+// import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+// import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+// import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+// import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
+import { RGBShiftShader } from "three/examples/jsm/shaders/RGBShiftShader.js";
+
 import { gsap } from "gsap";
 
 export default class Portal {
     constructor(container) {
+        console.log("start portal effects");
+
         // Passed in parameters
         this.container = container;
 
@@ -20,13 +32,18 @@ export default class Portal {
 
         // Camera animation properties
         this.cameraEndZ = this.numberOfLayers * this.layerSpacing; // Where the camera should stop
+        this.cameraAnimating = false; // Flag to track if camera is currently animating
+        this.cameraAnimationStartTime = 0; // When the camera animation starts
+        this.cameraAnimationDuration = 2; // Duration of the animation in seconds
 
         // Scene and related objects
         this.scene = null;
         this.camera = null;
         this.renderer = null;
         this.composer = null;
+        // this.stats = null;
         this.controls = null;
+        // this.clock = null;
 
         // Layers
         this.layers = [];
@@ -35,146 +52,161 @@ export default class Portal {
         this.squarePortal = [];
         this.hexagonPortal = [];
         this.circlePortal = [];
-        // this.hexagonDashedLines = null;
+        this.hexagonDashedLines = null;
         this.activePortal = this.hexagonPortal;
         this.offsetX = 12.5;
-        this.offsetZ = 10;
+        this.offsetZ = 20;
         this.cameraOffsetZ = -7;
         this.offsetXSquarePortal = this.offsetX;
         this.offsetXSHexagonPortal = 0;
         this.offsetXCirclePortal = -this.offsetX;
 
+        // Parallax effect
+        this.targetCameraPosition = new THREE.Vector3();
+        this.mouse = new THREE.Vector2();
+
         // Style parameters
         this.params = {
-            strength: 0.6,
-            radius: 0.9,
-            threshold: 0.1,
+            threshold: 0,
+            strength: 0.66,
+            radius: 0.35,
             exposure: 1,
         };
 
         // Initialize
-        // this.initScene();
-
-        this.init(container);
-    }
-
-    init($container) {
-        // console.log("hello cube?");
-
-        // // Create a cube geometry
-        // const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-
-        // // Create a cube material
-        // const cubeMaterial = new THREE.MeshBasicMaterial({
-        //     color: 0x00ff00,
-        // });
-
-        // // Create a cube mesh
-        // const cubeMesh = new THREE.Mesh(cubeGeometry, cubeMaterial);
-
-        // cubeMesh.position.set(0, 0, 10);
-
-        // Create the scene
-        const scene = new THREE.Scene();
-
-        // Add the cube to the scene
-        // scene.add(cubeMesh);
-
-        // Create the renderer
-        const renderer = new THREE.WebGLRenderer({
-            antialias: true,
-        });
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize($container.clientWidth, $container.clientHeight);
-        renderer.toneMapping = THREE.ReinhardToneMapping;
-
-        // Add the renderer canvas to the container
-        const canvas = renderer.domElement;
-        canvas.style.width = "100%";
-        canvas.style.height = "100%";
-        canvas.style.position = "absolute";
-        $container.appendChild(canvas);
-
-        // Create the camera
-        const camera = new THREE.PerspectiveCamera(
-            60,
-            $container.clientWidth / $container.clientHeight,
-            1,
-            300
-        );
-        camera.position.set(0, 0, -10);
-        camera.lookAt(new THREE.Vector3(0, 0, 0));
-        scene.add(camera);
-
-        // Create the render pass
-        const renderScene = new RenderPass(scene, camera);
-
-        // Create an unreal bloom pass
-        const bloomPass = new UnrealBloomPass(
-            new THREE.Vector2($container.clientWidth, $container.clientHeight),
-            1,
-            1,
-            0
-        );
-
-        // Create an effect composer
-        const composer = new EffectComposer(renderer);
-        console.log(composer);
-        composer.addPass(renderScene);
-        composer.addPass(bloomPass);
-
-        // Add a point light to the scene
-        const pointLight = new THREE.PointLight(0xffffff, 1);
-        scene.add(pointLight);
-
-        this.initialState(scene);
-
-        this.animate(composer);
-    }
-
-    animate(composer) {
-        requestAnimationFrame(() => this.animate(composer));
-        composer.render(); // Render the scene with post-processing
+        this.initScene();
     }
 
     /**
      * Initializes the scene by setting up the initial state and starting the animation.
      */
-    initialState(scene) {
+    initScene() {
+        // Time
+        this.clock = new THREE.Clock();
+
+        // Renderer
+        this.renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true,
+        });
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setSize(
+            this.container.clientWidth,
+            this.container.clientHeight
+        );
+        this.renderer.toneMapping = THREE.ReinhardToneMapping;
+
+        // Add the canvas into the container
+        const canvas = this.renderer.domElement;
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+        this.container.appendChild(canvas);
+
+        // Scene
+        this.scene = new THREE.Scene();
+
+        // Camera
+        this.camera = new THREE.PerspectiveCamera(
+            60,
+            this.container.clientWidth / this.container.clientHeight,
+            1,
+            300
+        );
+        this.camera.position.set(0, 0, -50);
+        this.scene.add(this.camera);
+
+        // Controls
+        this.controls = new OrbitControls(
+            this.camera,
+            this.renderer.domElement
+        );
+        this.controls.enabled = false;
+
+        // Lighting
+        const pointLight = new THREE.PointLight(this.color, 100);
+        this.camera.add(pointLight);
+
+        // Post-processing
+        const renderScene = new RenderPass(this.scene, this.camera);
+        this.composer = new EffectComposer(this.renderer);
+        this.composer.addPass(renderScene);
+
+        const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(
+                this.container.clientWidth,
+                this.container.clientHeight
+            ),
+            0,
+            1,
+            0
+        );
+        bloomPass.threshold = this.params.threshold;
+        bloomPass.strength = this.params.strength;
+        bloomPass.radius = this.params.radius;
+
+        this.composer.addPass(bloomPass);
+
+        // Inside your initPostProcessing function after adding the bloomPass
+
+        // const rgbShiftPass = new ShaderPass(RGBShiftShader);
+        // rgbShiftPass.uniforms["amount"].value = 0.005;
+        // this.composer.addPass(rgbShiftPass);
+
+        // this.initPostProcessing(renderScene);
+
+        // Bind window resize event
+        window.addEventListener("resize", () => this.onWindowResize(), false);
+
+        // Set the size initialy
+        this.onWindowResize();
+
+        // Geometry
+        this.initialState();
+
+        // Start the animation
+        this.animate();
+    }
+
+    /**
+     * Initializes the scene by setting up the initial state and starting the animation.
+     */
+    initialState() {
         // Create the initial Square portal segment
         const squareSegment = this.createSegment("square", "#54EAAB");
-        // squareSegment.position.x = this.offsetXSquarePortal;
-        squareSegment.position.x = 0;
+        squareSegment.position.x = this.offsetXSquarePortal;
         squareSegment.position.z = this.offsetZ;
         this.squarePortal.push(squareSegment);
-        scene.add(squareSegment);
-        
+        this.scene.add(squareSegment);
+
         // Create the initial Hexagon portal segment
         const hexagonSegment = this.createSegment("hexagon", "#5FB2FF");
         hexagonSegment.position.z = this.offsetZ;
         this.hexagonPortal.push(hexagonSegment);
-        scene.add(hexagonSegment);
+        this.scene.add(hexagonSegment);
 
         // Create the initial Circle portal segment
         const circleSegment = this.createSegment("circle", "#CBA1FE");
-        // circleSegment.position.x = this.offsetXCirclePortal;
-        circleSegment.position.x = 0;
+        circleSegment.position.x = this.offsetXCirclePortal;
         circleSegment.position.z = this.offsetZ;
         this.circlePortal.push(circleSegment);
-        scene.add(circleSegment);
+        this.scene.add(circleSegment);
 
-        // Create a sphere geometry
-        const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-        // Create a red material
-        const sphereMaterial = new THREE.MeshBasicMaterial({
-            color: 0xff0000,
-        });
-        // Create a sphere mesh
-        const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        // Set the position of the sphere
-        sphereMesh.position.set(3, 0, 10);
-        // Add the sphere to the scene
-        scene.add(sphereMesh);
+        // Set the active portal based on some condition or default to hexagon
+        this.activePortal = this.hexagonPortal; // Assuming hexagon is the default active portal
+
+        // Dashed lines for the hexagon
+        // Assuming you have a size defined for your hexagon
+        // this.hexagonDashedLines = this.createHexagonDashedLines(
+        //     this.size,
+        //     "#5FB2FF",
+        //     -5,
+        //     240
+        // );
+        // this.scene.add(this.hexagonDashedLines);
+        // this.hexagonDashedLines.visible = false;
+
+        // Parallax effect based on cursor position
+        // this.parallaxEffect();
     }
 
     /**
@@ -192,6 +224,17 @@ export default class Portal {
             },
             "a"
         );
+
+        // Animate hexagonSegment to z = 0
+        // .to(
+        //     this.hexagonPortal[0].position,
+        //     {
+        //         z: 0,
+        //         duration: 0.6,
+        //         ease: "power4.out",
+        //     },
+        //     "a"
+        // );
     }
 
     // TODO: Disturbes other camera animations
@@ -273,16 +316,16 @@ export default class Portal {
     /**
      * The main animation loop.
      */
-    // animate() {
-    //     // If composer exits, otherwise use renderer.render(scene, camera)
-    //     if (this.composer) {
-    //         this.composer.render(); // Render the scene with post-processing
-    //     } else {
-    //         this.renderer.render(this.scene, this.camera);
-    //     }
+    animate() {
+        // If composer exits, otherwise use renderer.render(scene, camera)
+        if (this.composer) {
+            this.composer.render(); // Render the scene with post-processing
+        } else {
+            this.renderer.render(this.scene, this.camera);
+        }
 
-    //     requestAnimationFrame(this.animate.bind(this)); // Ensure proper 'this' context
-    // }
+        requestAnimationFrame(this.animate.bind(this)); // Ensure proper 'this' context
+    }
 
     /*
      * Starts the portal animation.
@@ -420,7 +463,7 @@ export default class Portal {
      * @returns {THREE.BufferGeometry} The created hexagon geometry.
      */
     createHexagonGeometry() {
-        const size = 1.5; // Define the size (radius) of the hexagon
+        const size = this.size; // Define the size (radius) of the hexagon
         const numberOfSides = 6; // The hexagon has six sides
         const shape = new THREE.Shape();
         const x = 0; // Center x position

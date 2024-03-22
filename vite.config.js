@@ -6,14 +6,19 @@ import path from "path";
 // vite.config.js
 export default defineConfig({
     plugins: [glsl()],
-    // resolve: {
-    //     alias: {
-    //         three: path.resolve(__dirname, "./node_modules/three"),
-    //     },
-    // },
+    resolve: {
+        alias: {
+            three: path.resolve(__dirname, "node_modules/three"),
+            "/three/examples/jsm/": path.resolve(
+                __dirname,
+                "node_modules/three/examples/jsm/"
+            ),
+        },
+    },
     server: {
         host: "localhost",
-        cors: "*",
+        // cors: "*",
+        cors: true,
         hmr: {
             host: "localhost",
             protocol: "ws",
