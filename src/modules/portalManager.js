@@ -17,8 +17,8 @@ export default class PortalManager {
         this.portals = new Portal(this.$container);
         this.portalTriggers = {};
         this.portalScrollTrigger = null;
-        // this.initTriggers();
-        // this.initVideos();
+        this.initTriggers();
+        this.initVideos();
         // this.initVisibility();
         // this.snapInView();
     }

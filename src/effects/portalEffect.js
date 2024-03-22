@@ -3,6 +3,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass";
 import { gsap } from "gsap";
 
 export default class Portal {
@@ -10,75 +11,47 @@ export default class Portal {
         // Passed in parameters
         this.container = container;
 
-        // Segment settings
-        this.size = 1.5;
-
         // Animation settings
-        this.numberOfLayers = 90;
-        this.layerDelay = 12;
-        this.layerSpacing = 2;
+        this.numberOfLayers = 60;
+        this.layerDelay = 40;
+        this.layerSpacing = 3;
 
         // Camera animation properties
-        this.cameraEndZ = this.numberOfLayers * this.layerSpacing; // Where the camera should stop
 
         // Scene and related objects
-        this.scene = null;
         this.camera = null;
-        this.renderer = null;
-        this.composer = null;
-        this.controls = null;
-
-        // Layers
-        this.layers = [];
+        this.cameraInitialZ = -60;
+        this.cameraOffsetZ = -20;
+        this.cameraEndZ = this.numberOfLayers * this.layerSpacing; // Where the camera should stop
+        this.cameraZoomDelay = 1.8; // Delay for the camera to move after the portal building starts
 
         // Portals
-        this.squarePortal = [];
-        this.hexagonPortal = [];
-        this.circlePortal = [];
+        this.portalSquare = new THREE.Group();
+        this.portalHexagon = new THREE.Group();
+        this.portalCircle = new THREE.Group();
+        this.portalActive = this.portalHexagon;
+        this.portalOffsetX = 12;
+        this.portalOffsetZ = 0;
+        this.portalOffsetZActive = -14.5;
+        this.portalOffsetXSquarePortal = this.portalOffsetX;
+        this.portalOffsetXSHexagonPortal = 0;
+        this.portalOffsetXCirclePortal = -this.portalOffsetX;
         // this.hexagonDashedLines = null;
-        this.activePortal = this.hexagonPortal;
-        this.offsetX = 12.5;
-        this.offsetZ = 10;
-        this.cameraOffsetZ = -7;
-        this.offsetXSquarePortal = this.offsetX;
-        this.offsetXSHexagonPortal = 0;
-        this.offsetXCirclePortal = -this.offsetX;
 
         // Style parameters
         this.params = {
-            strength: 0.6,
-            radius: 0.9,
-            threshold: 0.1,
-            exposure: 1,
+            strength: 0.8,
+            radius: 0.95,
+            threshold: 0,
         };
 
         // Initialize
-        // this.initScene();
-
         this.init(container);
     }
 
     init($container) {
-        // console.log("hello cube?");
-
-        // // Create a cube geometry
-        // const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-
-        // // Create a cube material
-        // const cubeMaterial = new THREE.MeshBasicMaterial({
-        //     color: 0x00ff00,
-        // });
-
-        // // Create a cube mesh
-        // const cubeMesh = new THREE.Mesh(cubeGeometry, cubeMaterial);
-
-        // cubeMesh.position.set(0, 0, 10);
-
         // Create the scene
         const scene = new THREE.Scene();
-
-        // Add the cube to the scene
-        // scene.add(cubeMesh);
 
         // Create the renderer
         const renderer = new THREE.WebGLRenderer({
@@ -86,7 +59,16 @@ export default class Portal {
         });
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setSize($container.clientWidth, $container.clientHeight);
-        renderer.toneMapping = THREE.ReinhardToneMapping;
+
+        // Choose the desired tone mapping option
+        const toneMappingOptions = {
+            ACESFilmic: THREE.ACESFilmicToneMapping,
+            Cineon: THREE.CineonToneMapping,
+            Linear: THREE.LinearToneMapping,
+            None: THREE.NoToneMapping,
+            Reinhard: THREE.ReinhardToneMapping,
+        };
+        renderer.toneMapping = toneMappingOptions["Cineon"];
 
         // Add the renderer canvas to the container
         const canvas = renderer.domElement;
@@ -96,40 +78,53 @@ export default class Portal {
         $container.appendChild(canvas);
 
         // Create the camera
-        const camera = new THREE.PerspectiveCamera(
+        this.camera = new THREE.PerspectiveCamera(
             60,
             $container.clientWidth / $container.clientHeight,
             1,
             300
         );
-        camera.position.set(0, 0, -10);
-        camera.lookAt(new THREE.Vector3(0, 0, 0));
-        scene.add(camera);
+        this.camera.position.set(0, 0, this.cameraInitialZ);
+        this.camera.lookAt(new THREE.Vector3(0, 0, 0));
+        scene.add(this.camera);
 
         // Create the render pass
-        const renderScene = new RenderPass(scene, camera);
+        const renderScene = new RenderPass(scene, this.camera);
 
         // Create an unreal bloom pass
         const bloomPass = new UnrealBloomPass(
             new THREE.Vector2($container.clientWidth, $container.clientHeight),
-            1,
-            1,
-            0
+            this.params.strength, // Strength
+            this.params.radius, // Radius
+            this.params.threshold // Threshold
         );
 
         // Create an effect composer
         const composer = new EffectComposer(renderer);
-        console.log(composer);
+        const outputPass = new OutputPass();
         composer.addPass(renderScene);
         composer.addPass(bloomPass);
+        composer.addPass(outputPass);
 
         // Add a point light to the scene
-        const pointLight = new THREE.PointLight(0xffffff, 1);
-        scene.add(pointLight);
+        // const pointLight = new THREE.PointLight(0xffffff, 1);
+        // scene.add(pointLight);
 
         this.initialState(scene);
 
         this.animate(composer);
+
+        setTimeout(() => {
+            this.bringForwardAnimation();
+        }, 1000);
+
+        // setTimeout(() => {
+        //     this.focus("square");
+        // }, 2000);
+
+        // setTimeout(() => {
+        //     this.start();
+        // }, 3000);
     }
 
     animate(composer) {
@@ -143,38 +138,23 @@ export default class Portal {
     initialState(scene) {
         // Create the initial Square portal segment
         const squareSegment = this.createSegment("square", "#54EAAB");
-        // squareSegment.position.x = this.offsetXSquarePortal;
-        squareSegment.position.x = 0;
-        squareSegment.position.z = this.offsetZ;
-        this.squarePortal.push(squareSegment);
-        scene.add(squareSegment);
-        
+        squareSegment.position.x = this.portalOffsetX;
+        squareSegment.position.z = this.portalOffsetZ;
+        this.portalSquare.add(squareSegment);
+        scene.add(this.portalSquare);
+
         // Create the initial Hexagon portal segment
         const hexagonSegment = this.createSegment("hexagon", "#5FB2FF");
-        hexagonSegment.position.z = this.offsetZ;
-        this.hexagonPortal.push(hexagonSegment);
-        scene.add(hexagonSegment);
+        hexagonSegment.position.z = this.portalOffsetZ;
+        this.portalHexagon.add(hexagonSegment);
+        scene.add(this.portalHexagon);
 
         // Create the initial Circle portal segment
         const circleSegment = this.createSegment("circle", "#CBA1FE");
-        // circleSegment.position.x = this.offsetXCirclePortal;
-        circleSegment.position.x = 0;
-        circleSegment.position.z = this.offsetZ;
-        this.circlePortal.push(circleSegment);
-        scene.add(circleSegment);
-
-        // Create a sphere geometry
-        const sphereGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-        // Create a red material
-        const sphereMaterial = new THREE.MeshBasicMaterial({
-            color: 0xff0000,
-        });
-        // Create a sphere mesh
-        const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        // Set the position of the sphere
-        sphereMesh.position.set(3, 0, 10);
-        // Add the sphere to the scene
-        scene.add(sphereMesh);
+        circleSegment.position.x = -this.portalOffsetX;
+        circleSegment.position.z = this.portalOffsetZ;
+        this.portalCircle.add(circleSegment);
+        scene.add(this.portalCircle);
     }
 
     /**
@@ -183,106 +163,82 @@ export default class Portal {
     bringForwardAnimation() {
         const introTL = gsap.timeline();
 
-        introTL.to(
-            this.camera.position,
-            {
-                z: this.cameraOffsetZ,
-                duration: 0.6,
-                ease: "power4.out",
-            },
-            "a"
-        );
-    }
+        console.log("bring forward");
 
-    // TODO: Disturbes other camera animations
-    parallaxEffect() {
-        document.addEventListener("mousemove", (event) => {
-            // Convert mouse position to normalized device coordinates (-1 to +1)
-            this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            // Calculate target camera position based on mouse position
-            // Adjust the multiplier for subtler effect
-            this.targetCameraPosition.x = this.mouse.x * 0.1;
-            this.targetCameraPosition.y = this.mouse.y * 0.1;
-
-            // Keep the camera's z-position constant to prevent moving past elements
-            this.targetCameraPosition.z = this.camera.position.z;
-
-            // Use GSAP to smoothly move the camera towards the target position
-            gsap.to(this.camera.position, {
-                x: this.targetCameraPosition.x,
-                y: this.targetCameraPosition.y,
-                duration: 0.5, // Adjust duration for desired speed
-                ease: "power2.out", // Choose easing function as needed
-            });
-        });
+        introTL
+            .to(
+                this.camera.position,
+                {
+                    z: this.cameraOffsetZ,
+                    duration: 0.6,
+                    ease: "power4.out",
+                },
+                "a"
+            )
+            .to(
+                this.portalActive.position,
+                {
+                    duration: 0.6,
+                    ease: "power4.out",
+                    z: this.portalOffsetZActive,
+                },
+                "a"
+            );
     }
 
     /**
      * Focuses on the specified shape.
-     * @param {string} shape - The shape to focus on.
-     * @throws {Error} If the shape is unknown.
-     * @returns {void}
      */
     focus(shape) {
         // console.log(`...focusing on ${shape}...`);
         const targetX = {
-            square: this.offsetXSquarePortal,
-            hexagon: this.offsetXSHexagonPortal,
-            circle: this.offsetXCirclePortal,
+            square: this.portalOffsetXSquarePortal,
+            hexagon: this.portalOffsetXSHexagonPortal,
+            circle: this.portalOffsetXCirclePortal,
         }[shape];
-        const previousPortal = this.activePortal;
+        const previousPortal = this.portalActive;
 
         switch (shape) {
             case "square":
-                this.activePortal = this.squarePortal;
+                this.portalActive = this.portalSquare;
                 break;
             case "hexagon":
-                this.activePortal = this.hexagonPortal;
+                this.portalActive = this.portalHexagon;
                 break;
             case "circle":
-                this.activePortal = this.circlePortal;
+                this.portalActive = this.portalCircle;
                 break;
             default:
                 console.log(`Unknown shape: ${shape}`);
                 return;
         }
 
-        // GSAP defaults
-        gsap.defaults({ duration: 0.9, ease: "power4.inOut" });
-
         // GSAP animation for camera and portals
-        gsap.to(this.camera.position, {
-            x: targetX,
-        });
-
-        // Move the previous portal back
-        previousPortal.forEach((segment) => {
-            gsap.to(segment.position, {
-                z: this.offsetZ,
-            });
-        });
-
-        // Move the current active portal to the front
-        gsap.to(this.activePortal[0].position, {
-            z: 0,
-        });
+        gsap.defaults({ duration: 0.9, ease: "power4.inOut" });
+        const timeline = gsap.timeline();
+        timeline
+            .to(
+                this.camera.position,
+                {
+                    x: targetX,
+                },
+                "a"
+            )
+            .to(
+                previousPortal.position,
+                {
+                    z: 0,
+                },
+                "a"
+            )
+            .to(
+                this.portalActive.position,
+                {
+                    z: this.portalOffsetZActive,
+                },
+                "a"
+            );
     }
-
-    /**
-     * The main animation loop.
-     */
-    // animate() {
-    //     // If composer exits, otherwise use renderer.render(scene, camera)
-    //     if (this.composer) {
-    //         this.composer.render(); // Render the scene with post-processing
-    //     } else {
-    //         this.renderer.render(this.scene, this.camera);
-    //     }
-
-    //     requestAnimationFrame(this.animate.bind(this)); // Ensure proper 'this' context
-    // }
 
     /*
      * Starts the portal animation.
@@ -294,10 +250,10 @@ export default class Portal {
         console.log("...starting portal animation...");
 
         // Clear the active portal array except for the first element (the original segment)
-        while (this.activePortal.length > 1) {
-            const segment = this.activePortal.pop();
-            this.scene.remove(segment); // Remove segment from scene if needed
-        }
+        // while (this.portalActive.children.length > 1) {
+        //     const segment = this.portalActive.children.pop();
+        //     // this.scene.remove(segment); // Remove segment from scene if needed
+        // }
 
         // TODO: Add and animate dashed lines
         // this.hexagonDashedLines.visible = true; // Make the lines visible
@@ -322,7 +278,7 @@ export default class Portal {
                     ease: "power4.out",
                     onStart: () => {
                         // Clone the original segment which is at index 0
-                        const originalSegment = this.activePortal[0];
+                        const originalSegment = this.portalActive.children[0];
                         const segment = originalSegment.clone();
 
                         // Position it at the correct depth
@@ -330,8 +286,7 @@ export default class Portal {
                             originalSegment.position.z + i * this.layerSpacing; // position clones with an offset on the z-axis
 
                         // Add the new segment to the scene and the active portal array
-                        this.scene.add(segment);
-                        this.activePortal.push(segment);
+                        this.portalActive.add(segment);
                     },
                 }
             );
@@ -346,23 +301,19 @@ export default class Portal {
                 ease: "power4.in",
                 onComplete: () => {
                     console.log("Camera animation complete.");
-                    // Additional callbacks or actions after camera animation can be placed here
                 },
-                // }, `+=${(this.numberOfLayers - 1) * this.layerDelay / 1000}`); // start after all segments have been added
             },
-            "-=1.6"
-        ); // start after all segments have been added
+            `-=${this.cameraZoomDelay}` // start the camera animation before the portal building completes
+        ); 
     }
 
     /**
      * Creates a segment based on the specified shape.
-     * @returns {THREE.Line} The created segment.
      */
     createSegment(shape = this.shape, color = this.color) {
         const geometry = this.createGeometry(shape);
         const material = new THREE.LineBasicMaterial({
             color: color,
-            linewidth: 5,
         });
         const segment = new THREE.Line(geometry, material);
         return segment;
@@ -370,9 +321,6 @@ export default class Portal {
 
     /**
      * Creates a geometry based on the specified shape.
-     * @param {string} shape - The shape of the geometry.
-     * @returns {THREE.Geometry} The created geometry.
-     * @throws {Error} If the shape is unknown.
      */
     createGeometry(shape) {
         switch (shape) {
@@ -389,7 +337,6 @@ export default class Portal {
 
     /**
      * Creates a square geometry.
-     * @returns {THREE.ShapeGeometry} The created square geometry.
      */
     createSquareGeometry() {
         // const size = this.size; // Define the size of the square
@@ -405,7 +352,6 @@ export default class Portal {
 
     /**
      * Creates a circle geometry.
-     * @returns {THREE.EdgesGeometry} The created circle geometry.
      */
     createCircleGeometry() {
         // const radius = this.size; // Define the radius of the circle
@@ -417,7 +363,6 @@ export default class Portal {
 
     /**
      * Creates a hexagon geometry.
-     * @returns {THREE.BufferGeometry} The created hexagon geometry.
      */
     createHexagonGeometry() {
         const size = 1.5; // Define the size (radius) of the hexagon
@@ -484,49 +429,7 @@ export default class Portal {
     //     return dashedLines; // Return the group containing all the dashed lines
     // }
 
-    /**
-     * Initializes the post-processing effects.
-     */
-    // initPostProcessing(renderScene) {
-    //     const bloomPass = new UnrealBloomPass(
-    //         new THREE.Vector2(
-    //             this.container.clientWidth,
-    //             this.container.clientHeight
-    //         ),
-    //         1.5,
-    //         0.4,
-    //         0.85
-    //     );
-    //     bloomPass.threshold = this.params.threshold;
-    //     bloomPass.strength = this.params.strength;
-    //     bloomPass.radius = this.params.radius;
 
-    //     // const outputPass = new OutputPass();
-
-    //     this.composer = new EffectComposer(this.renderer);
-    //     this.composer.addPass(renderScene);
-    //     this.composer.addPass(bloomPass);
-    //     // this.composer.addPass(outputPass);
-    // }
-
-    // initPostProcessing(renderScene) {
-    //     const bloomPass = new UnrealBloomPass(
-    //         new THREE.Vector2(
-    //             this.container.clientWidth,
-    //             this.container.clientHeight
-    //         ),
-    //         1.5,
-    //         0.4,
-    //         0.85
-    //     );
-    //     bloomPass.threshold = this.params.threshold;
-    //     bloomPass.strength = this.params.strength;
-    //     bloomPass.radius = this.params.radius;
-
-    //     this.composer = new EffectComposer(this.renderer);
-    //     this.composer.addPass(renderScene);
-    //     this.composer.addPass(bloomPass);
-    // }
 
     onWindowResize() {
         // Ensure the renderer fills the whole viewport
