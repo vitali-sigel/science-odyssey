@@ -13,7 +13,7 @@ export default class OdysseyGalleryManager {
             console.warn("Could not create Odyssey Gallery - container not found.");
             return;
         }
-        gsap.registerPlugin(ScrollTrigger, Draggable, InertiaPlugin, Flip);
+        // gsap.registerPlugin(ScrollTrigger, Draggable, InertiaPlugin, Flip);
         this.isActive = false;
         this.$sourceContainer = null;
         this.zoomImageTL = null;

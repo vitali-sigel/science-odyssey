@@ -17,34 +17,19 @@ export default class PortalManager {
         this.portals = new Portal(this.$container);
         this.portalTriggers = {};
         this.portalScrollTrigger = null;
+        this.initVisibility();
         this.initTriggers();
         this.initVideos();
-        // this.initVisibility();
-        // this.snapInView();
+        this.snapInView();
     }
 
     snapInView() {
-        gsap.registerPlugin(ScrollToPlugin, ScrollTrigger);
-
         this.portalScrollTrigger = ScrollTrigger.create({
-            // markers: true,
+            markers: true,
             trigger: "#homePortals",
             once: true,
             start: "top 20%",
             onEnter: () => {
-                console.log("Snap to portals section");
-                
-                // TODO: Better snapping
-                // Snap to the portals section with GSAP
-                // gsap.to(window, {
-                //     scrollTo: {
-                //         y: "#homePortals",
-                //         // autoKill: false, // This prevents ScrollTrigger from stopping the scroll animation
-                //     },
-                //     duration: 0.8, // Duration of the scroll animation
-                //     ease: "power1.inOut", // Easing for the snap effect
-                // });
-
                 // Animate portal effect
                 this.portals.bringForwardAnimation();
 
@@ -58,7 +43,9 @@ export default class PortalManager {
     }
 
     initVisibility() {
-        const $activePortal = document.querySelector(".portal--active");
+        const $activePortal = document.querySelector(
+            ".portal:not(.w-condition-invisible)"
+        );
         gsap.set($activePortal, { autoAlpha: 0 });
     }
 
@@ -155,12 +142,14 @@ export default class PortalManager {
             // Toggle classes if not the initial state
             if (!initially) {
                 // Deactivate the currently active portal
-                const $activePortal = document.querySelector(".portal--active");
-                $activePortal?.classList.remove("portal--active");
+                const $activePortal = document.querySelector(
+                    ".portal:not(.w-condition-invisible)"
+                );
+                $activePortal?.classList.add("w-condition-invisible");
 
                 // Activate the new portal
                 const $newActivePortal = document.getElementById(contentId);
-                $newActivePortal?.classList.add("portal--active");
+                $newActivePortal?.classList.remove("w-condition-invisible");
             }
         }, 150);
     }

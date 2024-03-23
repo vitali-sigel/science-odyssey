@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
@@ -11,12 +10,22 @@ export default class Portal {
         // Passed in parameters
         this.container = container;
 
+        // For media queries (responsive design)
+        this.mm = gsap.matchMedia();
+
         // Animation settings
         this.numberOfLayers = 60;
         this.layerDelay = 40;
         this.layerSpacing = 3;
 
-        // Camera animation properties
+        // Scene
+        this.scene = null;
+
+        // Renderer
+        this.renderer = null;
+
+        // Animation ID to cancel and reset the animation
+        this.animationRequestID = null;
 
         // Scene and related objects
         this.camera = null;
@@ -30,13 +39,24 @@ export default class Portal {
         this.portalHexagon = new THREE.Group();
         this.portalCircle = new THREE.Group();
         this.portalActive = this.portalHexagon;
-        this.portalOffsetX = 12;
         this.portalOffsetZ = 0;
         this.portalOffsetZActive = -14.5;
+        this.portalOffsetX = 12;
+
+        this.mm.add("(max-width: 991px)", () => {
+            this.portalOffsetX = 8; // For mobile
+        });
+
+        this.mm.add("(min-width: 992px) and (max-width: 1919px)", () => {
+            this.portalOffsetX = 10; // For desktop
+        });
+
+        this.mm.add("(min-width: 1920px)", () => {
+            this.portalOffsetX = 12; // For large screens
+        });
         this.portalOffsetXSquarePortal = this.portalOffsetX;
         this.portalOffsetXSHexagonPortal = 0;
         this.portalOffsetXCirclePortal = -this.portalOffsetX;
-        // this.hexagonDashedLines = null;
 
         // Style parameters
         this.params = {
@@ -49,16 +69,19 @@ export default class Portal {
         this.init(container);
     }
 
+    /*
+     * Setup the scene and start the animation.
+     */
     init($container) {
         // Create the scene
-        const scene = new THREE.Scene();
+        this.scene = new THREE.Scene();
 
         // Create the renderer
-        const renderer = new THREE.WebGLRenderer({
+        this.renderer = new THREE.WebGLRenderer({
             antialias: true,
         });
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize($container.clientWidth, $container.clientHeight);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setSize($container.clientWidth, $container.clientHeight);
 
         // Choose the desired tone mapping option
         const toneMappingOptions = {
@@ -68,10 +91,10 @@ export default class Portal {
             None: THREE.NoToneMapping,
             Reinhard: THREE.ReinhardToneMapping,
         };
-        renderer.toneMapping = toneMappingOptions["Cineon"];
+        this.renderer.toneMapping = toneMappingOptions["Cineon"];
 
         // Add the renderer canvas to the container
-        const canvas = renderer.domElement;
+        const canvas = this.renderer.domElement;
         canvas.style.width = "100%";
         canvas.style.height = "100%";
         canvas.style.position = "absolute";
@@ -86,10 +109,10 @@ export default class Portal {
         );
         this.camera.position.set(0, 0, this.cameraInitialZ);
         this.camera.lookAt(new THREE.Vector3(0, 0, 0));
-        scene.add(this.camera);
+        this.scene.add(this.camera);
 
         // Create the render pass
-        const renderScene = new RenderPass(scene, this.camera);
+        const renderScene = new RenderPass(this.scene, this.camera);
 
         // Create an unreal bloom pass
         const bloomPass = new UnrealBloomPass(
@@ -100,35 +123,33 @@ export default class Portal {
         );
 
         // Create an effect composer
-        const composer = new EffectComposer(renderer);
+        const composer = new EffectComposer(this.renderer);
         const outputPass = new OutputPass();
         composer.addPass(renderScene);
         composer.addPass(bloomPass);
         composer.addPass(outputPass);
 
-        // Add a point light to the scene
-        // const pointLight = new THREE.PointLight(0xffffff, 1);
-        // scene.add(pointLight);
+        // Set initial portals
+        this.initialState(this.scene);
 
-        this.initialState(scene);
+        // Bind window resize event
+        window.addEventListener(
+            "resize",
+            () => this.onWindowResize(this.renderer, composer),
+            false
+        );
 
+        // Set the size initialy
+        this.onWindowResize(this.renderer, composer);
+
+        // Start animation loop
         this.animate(composer);
-
-        setTimeout(() => {
-            this.bringForwardAnimation();
-        }, 1000);
-
-        // setTimeout(() => {
-        //     this.focus("square");
-        // }, 2000);
-
-        // setTimeout(() => {
-        //     this.start();
-        // }, 3000);
     }
 
     animate(composer) {
-        requestAnimationFrame(() => this.animate(composer));
+        this.animationRequestID = requestAnimationFrame(() =>
+            this.animate(composer)
+        );
         composer.render(); // Render the scene with post-processing
     }
 
@@ -249,25 +270,6 @@ export default class Portal {
 
         console.log("...starting portal animation...");
 
-        // Clear the active portal array except for the first element (the original segment)
-        // while (this.portalActive.children.length > 1) {
-        //     const segment = this.portalActive.children.pop();
-        //     // this.scene.remove(segment); // Remove segment from scene if needed
-        // }
-
-        // TODO: Add and animate dashed lines
-        // this.hexagonDashedLines.visible = true; // Make the lines visible
-        // this.hexagonDashedLines.children.forEach((line) => {
-        //     // Assuming the material supports opacity; otherwise, use a custom shader
-        //     line.material.transparent = true;
-        //     line.material.opacity = 0;
-        //     gsap.to(line.material, {
-        //         opacity: 1,
-        //         duration: 1,
-        //         stagger: 0.5,
-        //     });
-        // });
-
         // Add portal building to the master timeline
         for (let i = 1; i < this.numberOfLayers; i++) {
             // start from 1 because 0 is the original segment
@@ -300,11 +302,14 @@ export default class Portal {
                 duration: 3,
                 ease: "power4.in",
                 onComplete: () => {
-                    console.log("Camera animation complete.");
+                    console.log(
+                        "Camera animation complete -> Dispose portal effect"
+                    );
+                    this.dispose();
                 },
             },
             `-=${this.cameraZoomDelay}` // start the camera animation before the portal building completes
-        ); 
+        );
     }
 
     /**
@@ -387,79 +392,40 @@ export default class Portal {
         return geometry;
     }
 
-    // createHexagonDashedLines(size, color, zStart, zEnd) {
-    //     const numberOfSides = 6;
-    //     const dashedLines = new THREE.Group(); // Create a group to hold all the lines
-
-    //     for (let i = 0; i < numberOfSides; i++) {
-    //         const angle = (i * 2 * Math.PI) / numberOfSides;
-
-    //         // Calculate the x and y coordinates for the corner of the hexagon
-    //         const x = size * Math.cos(angle);
-    //         const y = size * Math.sin(angle);
-
-    //         // Define the start and end points of the line along the z-axis
-    //         const start = new THREE.Vector3(x, y, zStart);
-    //         const end = new THREE.Vector3(x, y, zEnd);
-
-    //         // Create geometry and define positions
-    //         const geometry = new THREE.BufferGeometry().setFromPoints([
-    //             start,
-    //             end,
-    //         ]);
-
-    //         // Create dashed material
-    //         const material = new THREE.LineDashedMaterial({
-    //             color: color, // The color passed to the function
-    //             dashSize: 3, // Length of the dashes
-    //             gapSize: 1, // Length of the gaps
-    //             scale: 1, // The scale of the dashed lines
-    //         });
-
-    //         // Create the line
-    //         const line = new THREE.Line(geometry, material);
-
-    //         // Compute the line distances to get the dashed effect
-    //         line.computeLineDistances();
-
-    //         // Add the line to the group
-    //         dashedLines.add(line);
-    //     }
-
-    //     return dashedLines; // Return the group containing all the dashed lines
-    // }
-
-
-
-    onWindowResize() {
+    onWindowResize(renderer, composer) {
+        console.log("resizing");
         // Ensure the renderer fills the whole viewport
-        const newWidth = window.innerWidth;
-        const newHeight = window.innerHeight;
-        this.renderer.setSize(newWidth, newHeight);
+        let newWidth = window.innerWidth;
+        let newHeight = window.innerHeight;
+        renderer.setSize(newWidth, newHeight);
 
         // Calculate the new aspect ratio of the window
-        const newAspectRatio = newWidth / newHeight;
+        let newAspectRatio = newWidth / newHeight;
 
         // Adjust the camera's FOV based on the new aspect ratio
         this.camera.fov = this.adjustFOV(newAspectRatio);
-
-        // TODO: Add breakpoint for mobile
-        // Log the new aspect ratio and FOV to the console for debugging
-        // console.log("aspect ratio: ", newAspectRatio);
-        // console.log("fov: ", this.camera.fov);
-
-        // Update the camera's projection matrix
+        this.camera.aspect = newAspectRatio;
         this.camera.updateProjectionMatrix();
 
-        // If using post-processing via EffectComposer, update its size as well
-        if (this.composer) {
-            this.composer.setSize(newWidth, newHeight);
-        }
+        // Adjust the composer's size
+        composer.setSize(newWidth, newHeight);
     }
 
     adjustFOV(newAspectRatio) {
         // Define the base FOV that you want to maintain vertically
-        const baseVerticalFOV = 30; // This is an arbitrary value; adjust it based on your scene
+        let baseVerticalFOV = 15; // This is an arbitrary value; adjust it based on your scene
+
+        this.mm.add("(max-width: 991px)", () => {
+            baseVerticalFOV = 45; // For mobile
+        });
+
+        this.mm.add("(min-width: 992px) and (max-width: 1919px)", () => {
+            baseVerticalFOV = 55; // For desktop
+        });
+
+        this.mm.add("(min-width: 1920px)", () => {
+            baseVerticalFOV = 66; // For large screens
+        });
 
         // Calculate the new FOV
         // This FOV calculation maintains the same vertical size regardless of width changes
@@ -470,6 +436,55 @@ export default class Portal {
             ) *
             (180 / Math.PI);
 
-        return newFOV * 1.7;
+        return newFOV;
+    }
+
+    /*
+     * Dispose the webgl animation
+     */
+
+    dispose() {
+        console.log("dispose portal effect", this.scene);
+
+        // Cancel the animation
+        cancelAnimationFrame(this.animationRequestID);
+
+        // Dispose scene
+        this.disposeScene(this.scene);
+
+        // Dispose renderer
+        this.renderer.dispose();
+
+        // Remove the canvas from the container
+        this.renderer.domElement.remove();
+    }
+
+    /*
+     * Cascade to dispose all objects in the scene
+     */
+
+    disposeScene(obj) {
+        if (obj.children.length > 0) {
+            for (let i = obj.children.length - 1; i >= 0; i--) {
+                this.disposeScene(obj.children[i]);
+            }
+        }
+
+        if (obj.geometry) {
+            obj.geometry.dispose();
+        }
+
+        if (obj.material) {
+            if (obj.material.length) {
+                for (let i = 0; i < obj.material.length; ++i) {
+                    obj.material[i].dispose();
+                }
+            } else {
+                obj.material.dispose();
+            }
+        }
+
+        obj.removeFromParent();
+        obj = null;
     }
 }

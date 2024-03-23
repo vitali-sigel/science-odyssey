@@ -18,8 +18,6 @@ export default class OdysseyStoryManager {
             $pin = scene.querySelector(".scene-pin"),
             $image = scene.querySelector(".odyssey-story__image-wrapper");
 
-        gsap.registerPlugin(ScrollTrigger);
-
         const tl = gsap.timeline({
             scrollTrigger: {
                 trigger: scene,

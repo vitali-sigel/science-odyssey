@@ -2,10 +2,26 @@ import "./styles/style.css";
 import LenisManager from "./modules/lenisManager";
 import BarbaManager from "./modules/barbaManager";
 import TypeShuffleManager from "./modules/typeShuffleManager";
-import ThreeTest from "./modules/threeTest";
+import gsap from "gsap";
+import {
+    ScrollTrigger,
+    Draggable,
+    InertiaPlugin,
+    Flip,
+    ScrollToPlugin,
+} from "gsap/all";
 
 // Trigger effect on button click
 document.addEventListener("DOMContentLoaded", function () {
+    
+    // Init GSAP
+    gsap.registerPlugin(
+        ScrollTrigger,
+        Draggable,
+        InertiaPlugin,
+        Flip,
+        ScrollToPlugin
+    );
 
     // Init Lenis smooth scrolling
     // new LenisManager();
@@ -22,5 +38,5 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Test Bloom
-    new ThreeTest();
+    // new ThreeTest();
 });
