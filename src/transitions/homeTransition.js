@@ -11,7 +11,6 @@ export const leaveHomeTransition = (data, state) => {
     // Add onComplete callback to the timeline
     tl.add(() => {
         data.current.container.style = "display: none";
-        console.log("leave home complete");
     }, tlDuration);
     return tl.play();
 };

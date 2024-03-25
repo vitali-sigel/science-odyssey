@@ -10,7 +10,6 @@ export default class PortalManager {
             return;
         }
 
-        console.log("init portal manager", this.$container);
         this.portalsWebGL = new Portal(this.$container);
         this.portalTriggers = {};
         this.portalScrollTrigger = null;

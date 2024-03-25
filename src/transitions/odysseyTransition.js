@@ -8,6 +8,7 @@ export const leaveOdysseyTransition = (data) => {
 };
 
 export const enterOdysseyTransition = (data, state) => {
+    // Enter the content with absolute position
     gsap.set(data.next.container, {
         position: "absolute",
         top: "0px",
@@ -15,10 +16,12 @@ export const enterOdysseyTransition = (data, state) => {
     });
     // Hide the footer
     gsap.set(".footer", { autoAlpha: 0 });
+    // Add text-shuffle effect on h1 tag
+
     return gsap.from(data.next.container, {
-        yPercent: 10,
+        yPercent: 3,
         opacity: 0,
-        duration: 3,
+        duration: 2,
         ease: "power4.out",
         onComplete: () => {
             gsap.set(data.next.container, {

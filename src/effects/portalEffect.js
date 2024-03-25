@@ -14,7 +14,7 @@ export default class Portal {
         this.mm = gsap.matchMedia();
 
         // Animation settings
-        this.numberOfLayers = 60;
+        this.numberOfLayers = 50;
         this.layerDelay = 40;
         this.layerSpacing = 3;
 
@@ -184,8 +184,6 @@ export default class Portal {
     bringForwardAnimation() {
         const introTL = gsap.timeline();
 
-        console.log("bring forward");
-
         introTL
             .to(
                 this.camera.position,
@@ -300,9 +298,6 @@ export default class Portal {
                 duration: 3,
                 ease: "power4.in",
                 onComplete: () => {
-                    console.log(
-                        "Camera animation complete -> Dispose portal effect"
-                    );
                     this.dispose();
                 },
             },
@@ -393,7 +388,6 @@ export default class Portal {
     }
 
     onWindowResize(renderer, composer) {
-        console.log("resizing");
         // Ensure the renderer fills the whole viewport
         let newWidth = window.innerWidth;
         let newHeight = window.innerHeight;
