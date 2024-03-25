@@ -1,37 +1,40 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import Portal from "../effects/portalEffect";
 
 export default class PortalManager {
-    constructor(container) {
-        this.$container = container;
-
+    constructor() {
+        this.$container = document.getElementById("portalsContainer");
         if (!this.$container) {
-            console.warn("No portal container found");
+            console.warn("No portal container found (#portalsContainer)");
             return;
         }
 
-        console.log("init portal manager");
-
-        this.portals = new Portal(this.$container);
+        console.log("init portal manager", this.$container);
+        this.portalsWebGL = new Portal(this.$container);
         this.portalTriggers = {};
         this.portalScrollTrigger = null;
-        this.initVisibility();
+        this.activePortal = document.querySelector(
+            ".portal:not(.w-condition-invisible)"
+        );
+        gsap.set(this.activePortal, { autoAlpha: 0 });
         this.initTriggers();
         this.initVideos();
-        this.snapInView();
+        this.initWhenInView();
     }
 
-    snapInView() {
+    /*
+     * Initialize the portal when in view
+     */
+    initWhenInView() {
         this.portalScrollTrigger = ScrollTrigger.create({
-            markers: true,
-            trigger: "#homePortals",
+            // markers: true,
+            trigger: this.$container,
             once: true,
             start: "top 20%",
             onEnter: () => {
                 // Animate portal effect
-                this.portals.bringForwardAnimation();
+                this.portalsWebGL.bringForwardAnimation();
 
                 // Toggle the initial portal
                 const $initialTrigger = document.getElementById(
@@ -42,11 +45,28 @@ export default class PortalManager {
         });
     }
 
-    initVisibility() {
-        const $activePortal = document.querySelector(
-            ".portal:not(.w-condition-invisible)"
+    /*
+     * Return the portal animation timeline
+     */
+    getPortalTL() {
+        // Portal Content animation
+        let portalTL = gsap.timeline({ paused: true });
+        portalTL.to(
+            this.activePortal,
+            {
+                duration: 0.9,
+                opacity: 0,
+                scale: 0.9,
+                ease: "power4.out",
+            },
+            "a"
         );
-        gsap.set($activePortal, { autoAlpha: 0 });
+
+        // Portal webgl animation
+        portalTL.add(this.portalsWebGL.start(), "a");
+
+        // Return masterTL
+        return portalTL;
     }
 
     /*
@@ -62,8 +82,6 @@ export default class PortalManager {
             console.warn("Shape or content ID missing", trigger);
             return;
         }
-
-        console.log("Toggle Portal: " + shape, contentId, initially);
 
         // Set the trigger states
         switch (shape) {
@@ -95,11 +113,9 @@ export default class PortalManager {
         }
 
         // Focus Animation on the selected portal shape
-        this.portals.focus(shape);
+        this.portalsWebGL.focus(shape);
 
-        const $oldVideo = document.querySelector(
-            ".portal--active .portal__video"
-        );
+        const $oldVideo = this.activePortal.querySelector(".portal__video");
 
         // Hide old video
         if (!initially) {
@@ -111,8 +127,8 @@ export default class PortalManager {
                 },
                 {
                     opacity: 0,
-                    scale: 0.97,
-                    duration: 0.9,
+                    scale: 0.98,
+                    duration: 0.6,
                     ease: "power4.out",
                 }
             );
@@ -134,6 +150,9 @@ export default class PortalManager {
             }
         );
 
+        // TODO: Apply Text shuffle effect in more automated way
+        // Should have three options: in, out, and swap
+
         // Apply Text shuffle effect
         applyTextShuffle(contentId);
 
@@ -150,17 +169,9 @@ export default class PortalManager {
                 // Activate the new portal
                 const $newActivePortal = document.getElementById(contentId);
                 $newActivePortal?.classList.remove("w-condition-invisible");
+                this.activePortal = $newActivePortal;
             }
         }, 150);
-    }
-
-    animatePortalContent(content) {
-        gsap.to(content, {
-            duration: 0.6,
-            opacity: 0,
-            scale: 0.9,
-            ease: "power4.out",
-        });
     }
 
     initTriggers() {
@@ -170,27 +181,18 @@ export default class PortalManager {
         this.portalTriggers.circle = this.setupTrigger("portalTriggerCircle");
     }
 
-    setupTrigger(triggerId) {
-        const trigger = document.getElementById(triggerId);
+    setupTrigger(triggerID) {
+        const trigger = document.getElementById(triggerID);
         if (!trigger) {
-            console.warn("No portal trigger found with ID: " + triggerId);
+            console.warn("No portal trigger found with ID: " + triggerID);
             return;
         }
 
         trigger.addEventListener("click", (e) => this.togglePortal(e.target));
 
-        const contentId = trigger.getAttribute("data-content");
-        const content = document.getElementById(contentId);
-        const cta = content?.querySelector(".btn");
-
-        cta?.addEventListener("click", () => {
-            this.animatePortalContent(content);
-            this.portals.start();
-        });
-
         // Adjust the display of triggers based on initial setup
         trigger.style.display =
-            triggerId === "portalTriggerHexagon" ? "none" : "block";
+            triggerID === "portalTriggerHexagon" ? "none" : "block";
 
         return trigger;
     }

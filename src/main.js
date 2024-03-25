@@ -13,7 +13,7 @@ import {
 
 // Trigger effect on button click
 document.addEventListener("DOMContentLoaded", function () {
-    
+
     // Init GSAP
     gsap.registerPlugin(
         ScrollTrigger,
@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
     );
 
     // Init Lenis smooth scrolling
-    // new LenisManager();
+    const lenisManager = new LenisManager();
 
     // Init Custom Type Shuffle Effect
     new TypeShuffleManager();
@@ -32,11 +32,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // Init Barba Page Transitions
     let barbaManager = null;
     if (document.body.getAttribute("data-barba") === "wrapper") {
-        barbaManager = new BarbaManager();
+        barbaManager = new BarbaManager(lenisManager);
     } else {
         console.log("barba html structure is not set");
     }
-
-    // Test Bloom
-    // new ThreeTest();
 });

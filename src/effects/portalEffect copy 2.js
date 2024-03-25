@@ -7,7 +7,7 @@ import { gsap } from "gsap";
 
 export default class Portal {
     constructor(container) {
-        // Canvas container
+        // Passed in parameters
         this.container = container;
 
         // For media queries (responsive design)
@@ -268,6 +268,8 @@ export default class Portal {
         // Create a new GSAP timeline
         const masterTimeline = gsap.timeline();
 
+        console.log("...starting portal animation...");
+
         // Add portal building to the master timeline
         for (let i = 1; i < this.numberOfLayers; i++) {
             // start from 1 because 0 is the original segment
@@ -308,8 +310,6 @@ export default class Portal {
             },
             `-=${this.cameraZoomDelay}` // start the camera animation before the portal building completes
         );
-
-        return masterTimeline;
     }
 
     /**

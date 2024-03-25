@@ -5,21 +5,20 @@ let portalManager = null; // Make portalManager accessible outside setupHomeView
 /*
  * Handle Home View Animations
  */
-export const setupHomeView = (data) => {
-
+export const setupHomeView = (data, state) => {
     // Init Portal Manager
-    let $portalsContainer = document.getElementById("portalsContainer");
-    portalManager = new PortalManager($portalsContainer);
+    state.portalManager = new PortalManager();
 
-    // Refresh ScrollTrigger
+    // TODO: Workaround - Refresh ScrollTrigger
     setTimeout(() => {
         ScrollTrigger.refresh();
     }, 150);
 };
 
-export const cleanupHomeView = () => {
-    if (portalManager) {
-        portalManager.portalScrollTrigger.kill(); // Kill the ScrollTrigger instance
-        portalManager = null; // Dereference to avoid memory leaks
-    }
+export const getPortalManager = () => {
+    return portalManager;
+};
+
+export const cleanupHomeView = (data, state) => {
+    state.portalManager.portalScrollTrigger.kill(); // Kill the ScrollTrigger instance
 };

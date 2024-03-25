@@ -11,7 +11,11 @@ import { setupHomeView, cleanupHomeView } from "../views/homeView";
 import { setupOdysseyView } from "../views/odysseyView";
 
 export default class BarbaManager {
-    constructor() {
+    constructor(lenisManager) {
+        this.globalState = {
+            portalManager: null,
+            lenisManager: lenisManager
+        };
         this.barba = barba;
         this.init();
     }
@@ -23,9 +27,15 @@ export default class BarbaManager {
                     name: "leave-home",
                     from: { namespace: ["home"] },
                     to: { namespace: ["odyssey"] },
-                    leave: leaveHomeTransition,
-                    afterLeave: cleanupHomeView,
-                    enter: enterOdysseyTransition,
+                    leave: (data) => {
+                        return leaveHomeTransition(data, this.globalState);
+                    },
+                    afterLeave: (data) => {
+                        return cleanupHomeView(data, this.globalState);
+                    },
+                    enter: (data) => {
+                        return enterOdysseyTransition(data, this.globalState);
+                    },
                 },
                 {
                     name: "enter-home",
@@ -38,7 +48,9 @@ export default class BarbaManager {
             views: [
                 {
                     namespace: "home",
-                    beforeEnter: setupHomeView,
+                    beforeEnter: (data) => {
+                        return setupHomeView(data, this.globalState);
+                    },
                 },
                 {
                     namespace: "odyssey",
