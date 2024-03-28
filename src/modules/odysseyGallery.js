@@ -10,15 +10,20 @@ export default class OdysseyGalleryManager {
         // Register GSAP plugins
         this.$gallery = document.getElementById("odysseyGallery");
         if (!this.$gallery) {
-            console.warn("Could not create Odyssey Gallery - container not found.");
+            console.warn(
+                "Could not create Odyssey Gallery - container not found."
+            );
             return;
         }
-        // gsap.registerPlugin(ScrollTrigger, Draggable, InertiaPlugin, Flip);
         this.isActive = false;
         this.$sourceContainer = null;
         this.zoomImageTL = null;
+        this.$splineContainer = document.querySelector(
+            ".odyssey-gallery__spline-container"
+        );
+        this.splineIframe = this.initSpline();
         this.initOdysseyGallery();
-        this.initOdysseyGallerySpline();
+        // this.initOdysseyGallerySpline();
     }
 
     initOdysseyGallery() {
@@ -127,22 +132,69 @@ export default class OdysseyGalleryManager {
         this.isActive = setActive;
     }
 
-    initOdysseyGallerySpline() {
-        console.log("init odyssey gallery spline");
-        const $splineContainer = document.querySelector(
-            ".odyssey-gallery__spline-container"
-        );
-        const splineCanvas = document.createElement("canvas");
-        splineCanvas.id = "gallerySplineCanvas";
-        $splineContainer.appendChild(splineCanvas);
-        const splineURL = $splineContainer.getAttribute("data-spline");
-        if (!splineURL) return;
-        const app = new Application(splineCanvas);
-        app.load(splineURL);
-        const $canvas = document.getElementById("gallerySplineCanvas");
-        setTimeout(() => {
-            $canvas.style.width = "100%";
-            $canvas.style.height = "auto";
-        }, 1000);
+    // initOdysseyGallerySpline() {
+    //     console.log("init odyssey gallery spline");
+    //     const $splineContainer = document.querySelector(
+    //         ".odyssey-gallery__spline-container"
+    //     );
+    //     const splineCanvas = document.createElement("canvas");
+    //     splineCanvas.id = "gallerySplineCanvas";
+    //     $splineContainer.appendChild(splineCanvas);
+    //     const splineURL = $splineContainer.getAttribute("data-spline");
+    //     if (!splineURL) return;
+    //     const app = new Application(splineCanvas);
+    //     app.load(splineURL);
+    //     const $canvas = document.getElementById("gallerySplineCanvas");
+    //     setTimeout(() => {
+    //         $canvas.style.width = "100%";
+    //         $canvas.style.height = "auto";
+    //     }, 1000);
+    // }
+
+    initSpline() {
+        if (!this.$splineContainer) {
+            console.error(
+                `Spline container with id "${this.$splineContainer}" not found.`
+            );
+            return;
+        }
+
+        console.log("init odyssey intro spline");
+        const splineURL = this.$splineContainer.getAttribute("data-spline");
+        if (!splineURL) {
+            console.error("Spline URL not found.");
+            return;
+        }
+
+        const iframe = document.createElement("iframe");
+        iframe.src = splineURL;
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+
+        // Hide initially
+        gsap.set(iframe, { opacity: 0, y: 10 });
+
+        // Add an event listener for the 'load' event
+        iframe.addEventListener("load", () => {
+            console.log("Spline iframe has loaded.");
+            // Fade in the iframe using GSAP
+            gsap.to(iframe, {
+                opacity: 1,
+                y: 0,
+                duration: 3,
+                ease: "power4.out",
+            });
+        });
+
+        // Append the iframe to the container
+        this.$splineContainer.appendChild(iframe);
+
+        return iframe;
+    }
+
+    dispose() {
+        console.log("dispose odyssey intro spline");
+        this.splineIframe.remove();
+        console.log(this.splineIframe);
     }
 }

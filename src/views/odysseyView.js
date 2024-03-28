@@ -7,7 +7,7 @@ let odysseyIntro = null;
 export const setupOdysseyView = (data) => {
     odysseyIntro = new OdysseyIntro();
     // new OdysseyStoryManager();
-    // new OdysseyGalleryManager();
+    new OdysseyGalleryManager();
 };
 
 export const cleanupOdysseyView = (data) => {
