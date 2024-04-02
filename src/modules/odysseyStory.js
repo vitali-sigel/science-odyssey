@@ -16,18 +16,34 @@ export default class OdysseyStoryManager {
     createScrollScene(scene) {
         const $lead = scene.querySelector(".odyssey-story__lead-wrapper"),
             $pin = scene.querySelector(".scene-pin"),
-            $image = scene.querySelector(".odyssey-story__image-wrapper");
+            $imageWrapper = scene.querySelector(
+                ".odyssey-story__image-wrapper"
+            ),
+            $image = $imageWrapper.querySelector("img"),
+            tl = gsap.timeline();
 
-        const tl = gsap.timeline({
-            scrollTrigger: {
-                trigger: scene,
-                start: "top top",
-                end: "bottom bottom",
-                scrub: true,
-                pin: $lead,
-            },
-        });
+        // tl.from($image, {
+        //     // opacity: 0,
+        //     // duration: 1,
+        //     scrollTrigger: {
+        //         markers: true,
+        //         trigger: scene,
+        //         start: "top top",
+        //         end: "bottom bottom",
+        //         scrub: true,
+        //         pin: $imageWrapper,
+        //     },
+        // });
 
-        tl.fromTo($lead, { opacity: 0 }, { opacity: 1, duration: 1 }, "a");
+        // ScrollTrigger.create({
+        //     markers: true,
+        //     trigger: scene,
+        //     start: "top center",
+        //     end: "bottom bottom",
+        //     scrub: true,
+        //     pin: $image,
+        // });
+
+        // tl.fromTo($lead, { opacity: 0 }, { opacity: 1, duration: 1 }, "a");
     }
 }
