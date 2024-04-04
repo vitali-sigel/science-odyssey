@@ -5,9 +5,10 @@ import OdysseyIntro from "../modules/odysseyIntro";
 let odysseyIntro = null;
 
 export const setupOdysseyView = (data) => {
-    // odysseyIntro = new OdysseyIntro();
+    console.log("setup odyssey view");
+    odysseyIntro = new OdysseyIntro();
     new OdysseyStoryManager();
-    // new OdysseyGalleryManager();
+    new OdysseyGalleryManager();
 };
 
 export const cleanupOdysseyView = (data) => {

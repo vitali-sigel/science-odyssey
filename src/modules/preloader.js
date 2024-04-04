@@ -25,11 +25,11 @@ export default class Preloader {
             onStart: () => {
                 document.body.overflow = "hidden";
                 lenisManager.lenis.stop();
+                header.animateIn();
             },
             onComplete: () => {
                 document.body.overflow = "auto";
                 lenisManager.lenis.start();
-                header.animateIn();
             },
         });
 
@@ -83,6 +83,10 @@ export default class Preloader {
             "c"
         );
         tl.to(this.$container, { autoAlpha: 0, duration: 1 }, "d");
+        tl.add(() => {
+            console.log("dispatch event: ");
+            document.dispatchEvent(new CustomEvent('preloaderComplete'));
+        }, "d-=0.5")
 
         return tl;
     }

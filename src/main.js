@@ -11,6 +11,7 @@ import {
     InertiaPlugin,
     Flip,
     ScrollToPlugin,
+    SplitText,
 } from "gsap/all";
 
 // Trigger effect on button click
@@ -21,7 +22,8 @@ document.addEventListener("DOMContentLoaded", function () {
         Draggable,
         InertiaPlugin,
         Flip,
-        ScrollToPlugin
+        ScrollToPlugin,
+        SplitText
     );
 
     // Init Custom Type Shuffle Effect

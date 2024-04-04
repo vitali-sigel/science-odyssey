@@ -66,7 +66,6 @@ export default class BarbaManager {
                         console.log("VIEW: odyssey");
                         return setupOdysseyView(data, this.globalState);
                     }
-                    // beforeEnter: setupOdysseyView,
                 },
             ],
         });

@@ -1,6 +1,7 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Portal from "../effects/portalEffect";
+import TypeShuffle from "../effects/typeShuffleGSAP";
 
 export default class PortalManager {
     constructor() {
@@ -153,7 +154,24 @@ export default class PortalManager {
         // Should have three options: in, out, and swap
 
         // Apply Text shuffle effect
-        applyTextShuffle(contentId);
+        // applyTextShuffle(contentId);
+
+        new TypeShuffle({
+            elementEnter: $container.querySelector(".h2"),
+            animationType: "in",
+        }).trigger();
+
+        new TypeShuffle({
+            elementEnter: $container.querySelector(".lead"),
+            animationType: "in",
+        }).trigger();
+
+        $container.querySelectorAll(".eyebrow").forEach((eb) => {
+            new TypeShuffle({
+                elementEnter: eb,
+                animationType: "in",
+            }).trigger();
+        });
 
         // Delay the content switch to allow the text shuffle effect to start first
         setTimeout(() => {
